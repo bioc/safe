@@ -54,8 +54,8 @@ function(X.mat, y.vec, C.mat, Pi.mat = 1000, local="default", global = "Wilcoxon
 
   if(length(unlist(Pi.mat))==1) {
     return(new("SAFE",local=local,local.stat=u.obs,local.pval=as.numeric(rep(NA,num.genes)),global=global,
-            global.stat=v.obs,global.pval=as.numeric(rep(NA,num.genes)),error=error,alpha=as.numeric(alpha),
-            global.error=as.numeric(rep(NA,num.genes)),C.mat=C.mat,method=method))
+            global.stat=v.obs,global.pval=as.numeric(rep(NA,num.cats)),error=error,alpha=as.numeric(alpha),
+            global.error=as.numeric(rep(NA,num.cats)),C.mat=C.mat,method=method))
   } 
   if(error == "none"){
     emp.p <- rep(1/num.perms,num.cats)
@@ -97,7 +97,7 @@ function(X.mat, y.vec, C.mat, Pi.mat = 1000, local="default", global = "Wilcoxon
     if(is.na(alpha)) alpha <- 0.05
     return(new("SAFE",local=local,local.stat=u.obs,local.pval=u.pvalue,global=global,
             global.stat=v.obs,global.pval=emp.p,error=error,alpha=alpha,
-            global.error=as.numeric(rep(NA,num.genes)),C.mat=C.mat,method=method))
+            global.error=as.numeric(rep(NA,num.cats)),C.mat=C.mat,method=method))
   }
 
 }
