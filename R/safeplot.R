@@ -4,7 +4,7 @@ function(safe = NULL, cat.name = NULL, c.vec = NULL, local.stats = NULL, p.val =
                      x.label = "Ranked local statistic"){
     if(!is.null(safe)){
       local.stats <- safe@local.stat
-      if (is.na(one.sided)) if(substr(safe@local,1,1)=="f") one.sided<-T else one.sided<-F
+      if (is.na(one.sided)) if(substr(safe@local,1,1)=="f") one.sided<-TRUE else one.sided<-FALSE
       if(is.null(cat.name)) cat.name <- names(safe@global.stat[order(safe@global.pval)])[1]
       if (prod(limits == c(-Inf,Inf)) == 1) {
         limits[1] <- max(local.stats[(safe@local.pval <= 0.05)&(local.stats < 0)])
@@ -27,7 +27,7 @@ function(safe = NULL, cat.name = NULL, c.vec = NULL, local.stats = NULL, p.val =
 #    if(names(dev.cur()) %in% c("windows","null device")) x11(width=8,height=5.5)
     nf <- layout(matrix(c(1,2),2,1,byrow=TRUE), c(4,4), c(1,3), TRUE)
     par(plt=c(.1,.9,0,1),adj=0)
-    plot(1:m,rep(0.5,m),ylim=c(0.04,1),xaxs="i",axes=F,ylab="",xlab= "",col=0)
+    plot(1:m,rep(0.5,m),ylim=c(0.04,1),xaxs="i",axes=FALSE,ylab="",xlab= "",col=0)
     for(i in 1:m) if(c.vec.sorted[i]==1) points(rep(i,2),c(0.005,0.1),type="l",lwd=2)
     if(!is.null(gene.names)){
     if (one.sided){
@@ -78,11 +78,11 @@ function(safe = NULL, cat.name = NULL, c.vec = NULL, local.stats = NULL, p.val =
     plot(c(1,m),c(0,1),xlim=c(1,m),xaxs="i",yaxs="i",xlab=x.label,ylab="",main="",col=0)
     if (one.sided & (limits[2]<Inf)) {
       block <- sum(local.stats<limits[1])+1
-      polygon(c(block,m*0.9975,m*0.9975,block), c(0.004,0.004,0.996,0.996), border=F,col=8)
+      polygon(c(block,m*0.9975,m*0.9975,block), c(0.004,0.004,0.996,0.996), border=FALSE,col=8)
     } else {
       blocks <- c(sum(local.stats<limits[1]),sum(local.stats<limits[2])+1)
-      if(limits[1]> -Inf) polygon(c(m*0.0025,blocks[1],blocks[1],m*0.0025), c(0.004,0.004,0.996,0.996), border=F,col=8)
-      if(limits[2]< Inf) polygon(c(blocks[2],m*0.9975,m*0.9975,blocks[2]), c(0.004,0.004,0.996,0.996), border=F,col=8)
+      if(limits[1]> -Inf) polygon(c(m*0.0025,blocks[1],blocks[1],m*0.0025), c(0.004,0.004,0.996,0.996), border=FALSE,col=8)
+      if(limits[2]< Inf) polygon(c(blocks[2],m*0.9975,m*0.9975,blocks[2]), c(0.004,0.004,0.996,0.996), border=FALSE,col=8)
     }
     lines(c(1,m),c(0,1),lty=2, lwd=0.5)
     lines(1:m,cdf,type="s", lty=1,lwd=0.5)  

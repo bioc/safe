@@ -3,32 +3,32 @@ function(X.mat, y.vec, C.mat, Pi.mat = 1000, local="default", global = "Wilcoxon
                error = "none", write = NA, alpha = NA, method= "permutation",
                args.local = NULL, args.global = NULL){
 
-  if(is(X.mat,"exprSet")) {
+  if(is(X.mat,"ExpressionSet")) {
     require("Biobase")
     pData <- pData(X.mat)
     X.mat <- exprs(X.mat)
     if (length(y.vec) == 1){
       if(is.character(y.vec)){
        if(y.vec %in% names(pData)) y.vec <- pData[[y.vec]] else {
-         stop("y.vec not in pData(X.mat)",call.=F) }
+         stop("y.vec not in pData(X.mat)",call.=FALSE) }
       } else { 
        if(y.vec <= dim(pData)[[2]]) y.vec <- pData[[y.vec]] else {
-         stop("y.vec not in pData(X.mat)",call.=F) }
+         stop("y.vec not in pData(X.mat)",call.=FALSE) }
       }
     }
   }
   X.mat <- as.matrix(X.mat)
   C.mat <- as.matrix(C.mat)
   if (length(y.vec)!=dim(X.mat)[[2]]) {
-    stop("Dimensions of X.mat and y.vec do not conform",call.=F)}
+    stop("Dimensions of X.mat and y.vec do not conform",call.=FALSE)}
   if (dim(C.mat)[[1]]!=dim(X.mat)[[1]]) {
-    stop("Dimensions of X.mat and C.mat do not conform",call.=F)}
+    stop("Dimensions of X.mat and C.mat do not conform",call.=FALSE)}
   if (sum(dimnames(X.mat)[[1]]!=dimnames(C.mat)[[1]])>0) {
     print("WARNING: gene labels do not match between X.mat and C.mat")}
   if (length(unlist(Pi.mat))==1){
     if(Pi.mat > 1) Pi.mat <- getPImatrix(y.vec = y.vec,K = Pi.mat,method="random")
   } else  if(length(y.vec)!=dim(Pi.mat)[[2]]) {
-        stop("Dimensions of Pi.mat and y.vec do not conform",call.=F)}
+        stop("Dimensions of Pi.mat and y.vec do not conform",call.=FALSE)}
     
   num.cats  <- dim(C.mat)[[2]]
   if(length(unlist(Pi.mat))!=1) num.perms <- dim(Pi.mat)[[1]] else num.perms <- 1
@@ -66,7 +66,7 @@ function(X.mat, y.vec, C.mat, Pi.mat = 1000, local="default", global = "Wilcoxon
   } 
   if(!is.na(write)){
     write("Permuted Global Statistics",file=write)
-    write(v.obs,file=write,append=T,ncolumns=1)
+    write(v.obs,file=write,append=TRUE,ncolumns=1)
   }
 
   for(i in 2:num.perms){
@@ -75,7 +75,7 @@ function(X.mat, y.vec, C.mat, Pi.mat = 1000, local="default", global = "Wilcoxon
     v <- global.stat(C.mat,u)
     if(error == "none") {emp.p <- emp.p + (v>=v.obs)/num.perms
       } else V.mat[i,] <- v 
-    if(!is.na(write)) write(v,file=write,append=T,ncolumns=1)
+    if(!is.na(write)) write(v,file=write,append=TRUE,ncolumns=1)
     if (trunc(i/100)==i/100) print(paste(i,"permutations completed"))  
   }
   
@@ -83,7 +83,6 @@ function(X.mat, y.vec, C.mat, Pi.mat = 1000, local="default", global = "Wilcoxon
     if (!is.na(write)) V.mat <- t(matrix(scan(write,sep="\n",skip=1),
                                       num.cats,num.perms))
  
-
     P.mat <- (num.perms + 1 - apply(V.mat,2,rank,ties.method="min")) / num.perms
     dimnames(P.mat)[[2]]<-dimnames(C.mat)[[2]]  
 

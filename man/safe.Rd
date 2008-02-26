@@ -15,44 +15,44 @@ safe(X.mat, y.vec, C.mat, Pi.mat = 1000, local = "default",
      args.global = NULL)
 }
 \arguments{
-  \item{X.mat}{ A matrix or data.frame of expression data; each row corresponds to a gene
+  \item{X.mat}{A matrix or data.frame of expression data; each row corresponds to a gene
     and each column to a sample. Data can also be given as the Bioconductor class
-    \code{\link[Biobase:exprSet-class]{exprSet}}.
+    \code{\link[Biobase:ExpressionSet-class]{ExpressionSet}}.
     Data should be properly normalized and may not contain missing values.}
-  \item{y.vec}{a numeric, integer or character vector of length \code{ncol(X.mat)}
+  \item{y.vec}{A numeric, integer or character vector of length \code{ncol(X.mat)}
     containing the response of interest. If \code{X.mat} is an
-    \code{\link[Biobase:exprSet-class]{exprSet}}, \code{y.vec} can also be the name or
+    \code{\link[Biobase:ExpressionSet-class]{ExpressionSet}}, \code{y.vec} can also be the name or
     column number of a covariate in the \code{\link[Biobase:phenoData-class]{phenoData}}
-    slot. For examples of the acceptable forms \code{y.vec} can take, see the vignette. }
-  \item{C.mat}{ A matrix or data.frame containing the gene category assignments. Each column
+    slot. For examples of the acceptable forms \code{y.vec} can take, see the vignette.}
+  \item{C.mat}{A matrix or data.frame containing the gene category assignments. Each column
     represents a category and should be named accordingly. For each column, values of
     1 (\code{TRUE}) and 0 (\code{FALSE}) indicate whether the genes in the corresponding rows of
-    \code{X.mat} are contained in the category. }
-  \item{Pi.mat}{ A matrix or data.frame containing the permutations, or an integer. See
+    \code{X.mat} are contained in the category.}
+  \item{Pi.mat}{A matrix or data.frame containing the permutations, or an integer. See
     \code{getPImatrix} for the acceptable form of a matrix or data.frame. If \code{Pi.mat} is
     an integer, then \code{safe} will
-    automatically generate as many random permutations of \code{X.mat}. }
-  \item{local}{ Specifies the gene-specific statistic from the following options: "t.Student",
+    automatically generate as many random permutations of \code{X.mat}.}
+  \item{local}{Specifies the gene-specific statistic from the following options: "t.Student",
     "t.Welch" and "t.SAM" for 2-sample designs, "f.ANOVA" for 1-way ANOVAs, and "t.LM" for
     simple linear regressions. "default" will choose
     between "t.student" and "f.ANOVA", based on the form of \code{y.vec}. User-defined local statistics
-    can also be used; details are provided in the vignette. }
-  \item{global}{ Specifies the global statistic for a gene categories. By default, the Wilcoxon rank sum
+    can also be used; details are provided in the vignette.}
+  \item{global}{Specifies the global statistic for a gene categories. By default, the Wilcoxon rank sum
     is used with global = "Wilcoxon". Else, a Kolmogorov-Smirnov ("Kolmogorov") or hypergeometric
-    ("genelist") statistic is available. User-defined global statistics can also be implemented. }
-  \item{error}{ Specifies the method for computing error rate estimates. "FDR.YB" computes the
+    ("genelist") statistic is available. User-defined global statistics can also be implemented.}
+  \item{error}{Specifies the method for computing error rate estimates. "FDR.YB" computes the
     Yekutieli-Benjamini FDR estimate, "FWER.WY" computes the
-    Westfall-Young FWER estimate, and "none" will not compute any error rates. }
-  \item{write}{ Provides a path that permuted global statistics can be written to if needed by
-    the user. }
-  \item{alpha}{ Allows the user to define the criterion for significance. By default, alpha will be
-    0.05 for nominal p-values (\code{error} = "none" ), and 0.1 otherwise. }
-  \item{method}{ Currently, \code{safe} only assesses significance via "permutation". Future versions
+    Westfall-Young FWER estimate, and "none" will not compute any error rates.}
+  \item{write}{Provides a path that permuted global statistics can be written to if needed by
+    the user.}
+  \item{alpha}{Allows the user to define the criterion for significance. By default, alpha will be
+    0.05 for nominal p-values (\code{error} = "none" ), and 0.1 otherwise.}
+  \item{method}{Currently, \code{safe} only assesses significance via "permutation". Future versions
     will allow other resampling schemes.}
-  \item{args.local}{ An optional list to be passed to user-defined local statistics that require
-    additional arguments. For default statistics, \code{args.local = NULL}. }
-  \item{args.global}{ An optional list to be passed to global statistics that require
-    additional arguments. By default \code{args.local = NULL}. }
+  \item{args.local}{An optional list to be passed to user-defined local statistics that require
+    additional arguments. For default statistics, \code{args.local = NULL}.}
+  \item{args.global}{An optional list to be passed to global statistics that require
+    additional arguments. By default \code{args.local = NULL}.}
 }
 \details{
   \code{safe} utilizes a general framework for testing differential expression across gene categories
@@ -108,4 +108,4 @@ if (interactive()) {
 safeplot(results,"TrueCat 1")
 }
 }
-\keyword{ htest }
+\keyword{htest}

@@ -22,7 +22,7 @@ function(list = NULL,vector = NULL, file = NULL, delimiter = ",",
     if (!is.character(present.genes)) {
       if(!is.null(names(present.genes))) {
         if(sum(names(present.genes)!=dimnames(C.matrix)[[1]])>0) {
-          stop("Names of C matrix and present.genes do not conform",call.=F)
+          stop("Names of C matrix and present.genes do not conform",call.=FALSE)
         } 
       } 
       C.matrix <- C.matrix[present.genes,]

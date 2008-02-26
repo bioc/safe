@@ -1,7 +1,7 @@
 "local.t.Student" <-
 function(X.mat,y.vec){
     if (length(unique(y.vec))>2) {
-       stop("Wrong local statistic, y.vec has more than 2 elements",call.=F)
+       stop("Wrong local statistic, y.vec has more than 2 elements",call.=FALSE)
     } else if(sum(sort(unique(y.vec))==c(0,1))!=2) {
       print(paste("Warning: y.vec is not (0,1), thus 1 ==",y.vec[1]))
       y.vec <- (y.vec == y.vec[1])*1

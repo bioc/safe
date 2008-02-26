@@ -1,6 +1,6 @@
 Package: safe
 Title: Significance Analysis of Function and Expression
-Version: 1.11.0
+Version: 1.11.1
 Author: William T. Barry
 Description: SAFE is a permutation-based method for testing functional
         categories is gene expression experiments. SAFE can be applied
@@ -12,4 +12,3 @@ Suggests: multtest, hu6800
 Maintainer: William T. Barry <wbarry@bios.unc.edu>
 License: GPL version 2 or newer
 biocViews: Microarray, DifferentialExpression
-
