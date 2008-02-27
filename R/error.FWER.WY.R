@@ -1,4 +1,4 @@
-"error.FWER.WY" <-
+`error.FWER.WY` <-
 function(P.matrix){
   order <- order(order(P.matrix[1,]))
   P.matrix <- P.matrix[,order(P.matrix[1,])]
@@ -11,7 +11,6 @@ function(P.matrix){
   }
   WY[num.cat]<-sum(P.matrix<=P.matrix[1])/num.perms
   for(i in 2:num.cat) WY[i]<-max(WY[i],WY[i-1])
-  names(WY) <- dimnames(P.matrix)[[2]]
   return(WY[order])
 }
 

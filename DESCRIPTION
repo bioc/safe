@@ -1,14 +1,16 @@
 Package: safe
 Title: Significance Analysis of Function and Expression
-Version: 1.11.1
+Version: 2.0.0
+Date: 2007-04-09
 Author: William T. Barry
-Description: SAFE is a permutation-based method for testing functional
-        categories is gene expression experiments. SAFE can be applied
-        to 2-sample and multi-class comparisons, or simple linear
-        regressions. Other experimental designs can also be
-        accommodated through user-defined functions.
-Depends: R (>= 2.0.0), methods, Biobase
-Suggests: multtest, hu6800
-Maintainer: William T. Barry <wbarry@bios.unc.edu>
+Description: SAFE is a resampling-based method for testing
+  functional categories is gene expression experiments. SAFE
+  can be applied to 2-sample and multi-class comparisons, or 
+  simple linear regressions. Other experimental designs can 
+  also be accommodated through user-defined functions.
+Depends: R (>= 2.4.0), SparseM, GO, annotate, Biobase 
+Suggests: GOstats, Rgraphviz, multtest, hu6800, survival
+Imports: GO, annotate, survival, Biobase
+Maintainer: William T. Barry <bill.barry@duke.edu>
 License: GPL version 2 or newer
-biocViews: Microarray, DifferentialExpression
+URL: http://www.duke.edu/~dinbarry/SAFE/

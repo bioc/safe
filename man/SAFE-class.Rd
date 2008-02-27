@@ -37,15 +37,16 @@
 }
 \section{Methods}{ 
   \describe{
-    \item{show}{(SAFE): Summarizes the test results of significant categories.}
-    \item{"["}{(SAFE): Extracts results of one or more category.}
-    \item{safeplot}{(SAFE): The \code{\link{safeplot}} produces a plot of the
+    \item{show}{(gt.result): Summarizes the test results of significant categories.}
+    \item{[}{(gt.result): Returns a SAFE object for categories indicated
+      by integer of character strings.}
+    \item{safeplot}{(gt.result): The \code{\link{safeplot}} produces a plot of the
       relative association of expression in a category of genes relative to their
       complement.}
   }
 }
 
-\author{William T Barry: \email{wbarry@bios.unc.edu}}
+\author{William T Barry: \email{bill.barry@duke.edu}}
 
 \seealso{\code{\link{safe}}, \code{\link{safeplot}}.}
 

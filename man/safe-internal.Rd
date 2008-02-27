@@ -1,14 +1,25 @@
 \name{safe-internal}
 \alias{local.t.Welch}
 \alias{local.t.Student}
-\alias{local.t.SAM}
+\alias{local.t.paired}
 \alias{local.t.LM}
 \alias{local.f.ANOVA}
+\alias{local.f.GLM}
+\alias{local.z.COXPH}
 \alias{global.Wilcoxon}
 \alias{global.Kolmogorov}
-\alias{global.genelist}
+\alias{global.AveDiff}
+\alias{global.Fisher}
+\alias{global.Pearson}
 \alias{error.FDR.YB}
+\alias{error.FDR.BH}
 \alias{error.FWER.WY}
+\alias{error.FWER.Bonf}
+\alias{error.FWER.Holm}
+\alias{getPImatrix}
+\alias{getAnnotateOptions}
+\alias{getResamplingOptions}
+\alias{getSAFEResults}
 
 \title{ Internal SAFE functions }
 \description{
