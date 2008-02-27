@@ -4,7 +4,7 @@ function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = 
          args.global = list(one.sided=FALSE), error = "none", alpha = NA, 
          method = "permutation", min.size = 2, max.size = Inf, ...){
 
-  if(is(X.mat,"exprSet")) {
+  if(is(X.mat,"ExpressionSet")) {
     require("Biobase")
     pData <- pData(X.mat)
     X.mat <- exprs(X.mat)
