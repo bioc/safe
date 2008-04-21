@@ -19,7 +19,7 @@ gene.results(object = NULL, cat.name = NULL, error = "none", print.it = TRUE)
     adjustment can be selected. By default ("none") no error rates are
     computed. }
   \item{print.it}{ Logical determining whether results are printed to
-    screen or returned as a list of two data.frames. }
+    screen or returned as a list of results for up- and down-regulated genes. }
 }
 \references{ W. T. Barry, A. B. Nobel and F.A. Wright, 2005, \emph{Significance Analysis
     of functional categories in gene expression studies: a structured permutation approach},

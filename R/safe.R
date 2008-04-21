@@ -4,7 +4,7 @@ function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = 
          args.global = list(one.sided=FALSE), error = "none", alpha = NA, 
          method = "permutation", min.size = 2, max.size = Inf, ...){
 
-  if(is(X.mat,"ExpressionSet")) {
+  if(is(X.mat,"exprSet")) {
     require("Biobase")
     pData <- pData(X.mat)
     X.mat <- exprs(X.mat)
@@ -211,7 +211,7 @@ function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = 
     v2.sum <- v.obs^2
 
     for(i in 2:num.perms){
-      u <- local.stat(data = X.mat[,Pi.mat[i,]], vector = y.vec[Pi.mat[i,]], resample <- Pi.mat[i,])
+      u <- local.stat(data = X.mat[,Pi.mat[i,]], vector = y.vec[Pi.mat[i,]], resample = Pi.mat[i,])
       if(!is.null(args.local$boot.test)){
         if(args.local$boot.test=="q"){
           u.pvalue <- u.pvalue + (u*sign(u.obs) <= 0)/num.perms

@@ -15,13 +15,13 @@ function(object = NULL, cat.name = NULL, error = "none", print.it =TRUE){
     } else if(error=="none"){
       table <- data.frame(Local.Stat = round(object@local.stat,3),
                      Emp.pvalue = pretty(object@local.pval,4),
-                     Temp = object@local.pval)[keep==1,,drop=FALSE]
+                     Temp = object@local.pval,stringsAsFactors=FALSE)[keep==1,,drop=FALSE]
       table <-  table[order(table[,3], partial = -table[,1]*sign(table[,1])),,drop=FALSE][,1:2,drop=FALSE]
     } else {
       table <- data.frame(Local.Stat = round(object@local.stat,3),
                      Emp.pvalue = pretty(object@local.pval,4),
                      Adj.pvalue = pretty(error.p,4),
-                     Temp = object@local.pval)[keep==1,,drop=FALSE]
+                     Temp = object@local.pval,stringsAsFactors=FALSE)[keep==1,,drop=FALSE]
       table <-  table[order(table[,4], partial = -table[,1]*sign(table[,1])),,drop=FALSE][,1:3,drop=FALSE]
     }
     if(print.it==TRUE){
@@ -43,8 +43,10 @@ function(object = NULL, cat.name = NULL, error = "none", print.it =TRUE){
       if(min(table[,1])<=0) print(table[table[,1]<=0,,drop=FALSE]) else cat("None in category\n")
     }
   } else {
-    return(list(TableUp = table[table[,1]>0,,drop=FALSE],
-                TableDown = table[table[,1]<=0,,drop=FALSE]))
+    table <- data.frame(Genes = dimnames(table)[[1]], table,stringsAsFactors=FALSE)
+    rownames(table) <- NULL
+    return(list(TableUp = as.list(table[table[,2]>0,,drop=FALSE]),
+                TableDown = as.list(table[table[,2]<=0,,drop=FALSE])))
   }  
 }
 

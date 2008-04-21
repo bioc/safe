@@ -1,5 +1,5 @@
 `global.AveDiff` <-
-function(C.mat, u, one.sided, args.global ){
+function(C.mat, u, args.global ){
   m <-  length(u)
   size <- (rep(1,m) %*% C.mat)[1,]
   if(!args.global$one.sided){
