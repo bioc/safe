@@ -41,7 +41,7 @@ function(safe.obj, alpha=NULL){
     error <- "FWER (Westfall-Young)"
   } else error <- safe.obj@error
 
-  size <- (rep(1,length(object@local.stat)) %*% object@C.mat)[1,]
+  size <- (rep(1,length(safe.obj@local.stat)) %*% safe.obj@C.mat)[1,]
 
   return(list(local = local,                            # character-string describing local statistic
               gene.names = names(safe.obj@local.stat),  # character-vector of gene-names
