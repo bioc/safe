@@ -41,13 +41,15 @@ function(safe.obj, alpha=NULL){
     error <- "FWER (Westfall-Young)"
   } else error <- safe.obj@error
 
+  size <- (rep(1,length(object@local.stat)) %*% object@C.mat)[1,]
+
   return(list(local = local,                            # character-string describing local statistic
               gene.names = names(safe.obj@local.stat),  # character-vector of gene-names
               gene.stats = safe.obj@local.stat,         # numeric vector of gene-specific statistics
               gene.pvals = safe.obj@local.pval,         # numeric vector of gene-specific p-values
               global = global,                          # character-string describing global statistic
               cat.names = names(safe.obj@global.stat)[keep],            # character-vector of cat-names
-              cat.sizes = apply(as.matrix(safe.obj@C.mat),1,sum)[keep], # Numeric vector of category sizes 
+              cat.sizes = size[keep],                         # Numeric vector of category sizes 
               cat.stats = safe.obj@global.stat[keep],         # numeric vector of cat-specific statistics
               cat.pvals = safe.obj@global.pval[keep],         # numeric vector of cat-specific p-values
               cat.error = safe.obj@global.error[keep],        # numeric vector of cat-specific adjusted p-values
