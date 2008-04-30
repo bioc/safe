@@ -1,6 +1,6 @@
 Package: safe
 Title: Significance Analysis of Function and Expression
-Version: 2.2.0
+Version: 2.3.0
 Date: 2007-04-09
 Author: William T. Barry
 Description: SAFE is a resampling-based method for testing
