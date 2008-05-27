@@ -20,6 +20,9 @@
 \alias{getAnnotateOptions}
 \alias{getResamplingOptions}
 \alias{getSAFEResults}
+\alias{getErrorNames}
+\alias{getLocalStatisticNames}
+\alias{getGlobalStatisticNames}
 
 \title{ Internal SAFE functions }
 \description{

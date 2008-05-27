@@ -27,6 +27,7 @@ function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = 
       stop("C.mat or platform&annotate must be specified",call.=FALSE) 
     } else {
       require(platform,character.only=TRUE)
+      platform <- sub("[.]db$","",platform)
       names <- names(as.list(get(paste(platform,"ACCNUM",sep=""))))
       if (is.null(dimnames(X.mat)[[1]]) | (sum(dimnames(X.mat)[[1]] %in% names)==0) ) {
         stop(paste("row.names of X.mat do not conform with the '",platform,"' platform",sep=""),call.=FALSE)}
@@ -49,7 +50,7 @@ function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = 
         C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PFAM",sep=""))), 
                             present.genes = dimnames(X.mat)[[1]], min.size = min.size,
                             max.size = max.size)
-        C.names <- paste("PFAM:",substr(C.mat$col.names,3,100),sep="")
+        C.names <- paste("PF",substr(C.mat$col.names,3,100),sep="")
         C.mat <- C.mat$C.mat.csr
       } else stop(paste("Annotate = '",annotate,"' not recognized",sep=""),call.=FALSE)
    }

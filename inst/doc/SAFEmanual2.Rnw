@@ -78,7 +78,7 @@ Here, we implement \texttt{safe} using the datasets and annotations in Bioconduc
 <<initialize, results=hide>>=
 library(safe)
 library(multtest)
-library(hu6800)
+library(hu6800.db)
 @
 
 Every SAFE analysis requires three elements from a dataset: (1) gene expression
