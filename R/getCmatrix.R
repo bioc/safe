@@ -59,19 +59,15 @@ function(keyword.list = NULL, gene.list = NULL, vector = NULL, file = NULL,
        ia = as.integer(ia), dimension = as.integer(dimension))
 
   } else {
-    if(!is.null(GO.ont)) {require(GO) ; require(annotate)}  
-    keep <- rep(FALSE,length(keyword.list))
+    if(!is.null(GO.ont)){
+      require(GO.db)
+      keep <- sapply(mget(names(keyword.list),GOTERM),Ontology) %in% GO.ont
+      keyword.list <- keyword.list[keep]
+    } 
     if(is.null(present.genes)) present.genes <- sort(unique(unlist(keyword.list)))
     for (i in 1:length(keyword.list)) {
-      if(names(keyword.list)[[i]]!="all"){
-      if(is.null(GO.ont)) {
-        keep[i] <- (sum(present.genes %in% keyword.list[[i]]) >= min.size) & 
-                   (sum(present.genes %in% keyword.list[[i]]) <= max.size) 
-      } else {
-        keep[i] <- (sum(present.genes %in% keyword.list[[i]]) >= min.size) & 
-                   (sum(present.genes %in% keyword.list[[i]]) <= max.size) &
-                   (Ontology(mget(names(keyword.list)[[i]], GOTERM)[[1]]) %in% GO.ont)
-      }}
+      keep[i] <- (sum(present.genes %in% keyword.list[[i]]) >= min.size) & 
+                 (sum(present.genes %in% keyword.list[[i]]) <= max.size)
     }
     keyword.list <- keyword.list[keep]
     C.names <- names(keyword.list)
@@ -118,4 +114,3 @@ function(keyword.list = NULL, gene.list = NULL, vector = NULL, file = NULL,
     return(C.mat)
   } else return(list(C.mat.csr=C.matrix.csr, row.names = present.genes, col.names = C.names))
 }
-
