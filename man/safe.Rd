@@ -80,7 +80,7 @@ safe(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = NULL
 }
 \references{ W. T. Barry, A. B. Nobel and F.A. Wright, 2005, \emph{Significance Analysis
     of functional categories in gene expression studies: a structured permutation approach},
-    \emph{Bioinformatics} {\bf 21}(9) 1943--1949. 
+    \emph{Bioinformatics} \bold{21}(9) 1943--1949. 
 
     See also the vignette included with this package. }
 \author{ William T. Barry: \email{bill.barry@duke.edu} }
