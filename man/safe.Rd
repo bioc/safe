@@ -86,7 +86,7 @@ safe(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = NULL
 \author{ William T. Barry: \email{bill.barry@duke.edu} }
 
 \seealso{\code{\link{safeplot}}, \code{\link{getCmatrix}}, 
-  \code{\link{getPImatrix}}.}}
+  \code{\link{getPImatrix}}.}
 \examples{
 ## Simulate a dataset with 1000 genes and 20 arrays in a 2-sample design.
 ## The top 100 genes will be differentially expressed at varying levels
