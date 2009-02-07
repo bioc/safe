@@ -43,12 +43,12 @@ safeplot(c.vec=, local.stats= , p.val=, one.sided=, limits=,
 }
 \references{ W. T. Barry, A. B. Nobel and F.A. Wright, 2005, \emph{Significance Analysis
     of functional categories in gene expression studies: a structured permutation approach},
-    \emph{Bioinformatics} {\bf 21}(9) 1943--1949. 
+    \emph{Bioinformatics} \bold{21}(9) 1943--1949. 
 
   See also the vignette included with this package. }
 \author{ William T. Barry: \email{bill.barry@duke.edu} }
 
-\seealso{{\code{\link{safe}}.}}
+\seealso{\code{\link{safe}}.}
 \examples{
 ## Simulate a dataset with 1000 genes and 20 arrays in a 2-sample design.
 ## The top 100 genes will be differentially expressed at varying levels

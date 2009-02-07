@@ -34,10 +34,10 @@ safedag(object = NULL, ontology = NULL, top = NULL, file = NULL,
 }
 \references{ W. T. Barry, A. B. Nobel and F.A. Wright, 2005, \emph{Significance Analysis
     of functional categories in gene expression studies: a structured permutation approach},
-    \emph{Bioinformatics} {\bf 21}(9) 1943--1949. 
+    \emph{Bioinformatics} \bold{21}(9) 1943--1949. 
 
   See also the vignette included with this package. }
 \author{ William T. Barry: \email{bill.barry@duke.edu} }
 
-\seealso{{\code{\link{safe}}.}}
+\seealso{\code{\link{safe}}.}
 \keyword{ hplot }
