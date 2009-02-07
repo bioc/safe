@@ -50,8 +50,8 @@
     See also the vignette included with this package. }
 \author{ William T. Barry: \email{bill.barry@duke.edu} }
 
-\seealso{{\code{\link{safe}}, \code{\link{safeplot}}, 
-  \code{\link{getPImatrix}},.}}
+\seealso{\code{\link{safe}}, \code{\link{safeplot}}, 
+  \code{\link{getPImatrix}}.}
 \examples{
 ## A simple illustration
 anno <- c("Keyword1","Keyword2;Keyword3","",
