@@ -75,15 +75,12 @@ function(safe = NULL, cat.name = NULL, c.vec = NULL, local.stats = NULL, p.val =
         text(m/25,0.87,cat.name,cex=0.8,font=2,adj=0)
         text(m/25,0.80,paste("p =",round(p.val,4)),cex=0.8,font=2,adj=0)
         if(substr(cat.name,1,3)=="GO:"){
-          require("GO.db")
           text(m/25,0.75,mget(cat.name, GOTERM)[[1]]@Term,cex=0.6,font=2,adj=0)
           text(m/25,0.70,paste("Ont:",mget(cat.name, GOTERM)[[1]]@Ontology),
                cex=0.6,font=2,adj=0)
        }
       } else {
         if(substr(cat.name,1,3)=="GO:"){
-          require("GO.db")
-          require("annotate")
           text(24*m/25,0.27,cat.name,cex=0.8,font=2,adj=1)
           text(24*m/25,0.2,paste("p =",round(p.val,4)),cex=0.8,font=2,adj=1)
           text(24*m/25,0.15,mget(cat.name, GOTERM)[[1]]@Term,cex=0.6,font=2,adj=1)

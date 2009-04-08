@@ -7,9 +7,9 @@ Description: SAFE is a resampling-based method for testing
   can be applied to 2-sample and multi-class comparisons, or 
   simple linear regressions. Other experimental designs can 
   also be accommodated through user-defined functions.
-Depends: R (>= 2.4.0), SparseM, annotate, Biobase, methods
+Depends: R (>= 2.4.0), Biobase, annotate, methods
+Imports: SparseM, GO.db, annotate, AnnotationDbi, survival, Biobase
 Suggests: GO.db, GOstats, Rgraphviz, multtest, hu6800.db, survival
-Imports: annotate, survival, Biobase
 Maintainer: William T. Barry <bill.barry@duke.edu>
 License: GPL version 2 or newer
 URL: http://www.duke.edu/~dinbarry/SAFE/

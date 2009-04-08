@@ -3,8 +3,6 @@ function(keyword.list = NULL, gene.list = NULL, vector = NULL, file = NULL,
          delimiter = ",", present.genes = NULL, GO.ont = NULL, 
          min.size = 0, max.size = Inf, as.matrix = FALSE,...){
 
-  require(SparseM)
-
   if(is.null(keyword.list)){
     if(is.null(gene.list)) {  
       if(is.null(vector)) {
@@ -60,7 +58,6 @@ function(keyword.list = NULL, gene.list = NULL, vector = NULL, file = NULL,
 
   } else {
     if(!is.null(GO.ont)){
-      require(GO.db)
       keep <- sapply(mget(names(keyword.list),GOTERM),Ontology) %in% GO.ont
       keyword.list <- keyword.list[keep]
     } 

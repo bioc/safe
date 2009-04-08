@@ -247,7 +247,7 @@ local statistic should not be confused with the default global statistic)
 <<results=hide>>=
 local.Wilcoxon<-function(X.mat,y.vec, ...){
   return(function(data,trt = (y.vec == 1)) {
-    return(as.vector(trt %*% apply(data,1,rank)))
+    return(as.numeric(trt %*% apply(data,1,rank)))
   })
 }
 results2 <-  safe(golub, golub.cl, C.mat, Pi.mat = 1,

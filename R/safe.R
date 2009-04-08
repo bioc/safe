@@ -55,7 +55,6 @@ function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = 
       } else stop(paste("Annotate = '",annotate,"' not recognized",sep=""),call.=FALSE)
    }
   } else if(class(C.mat)=="matrix"){
-    require(SparseM)
     C.names <- dimnames(C.mat)[[2]]
     C.mat <- as.matrix.csr(C.mat)
     if (sum(dimnames(X.mat)[[1]]!=dimnames(C.mat)[[1]])>0) {
