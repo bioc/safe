@@ -1,6 +1,6 @@
 Package: safe
 Title: Significance Analysis of Function and Expression
-Version: 2.5.0
+Version: 2.5.1
 Author: William T. Barry
 Description: SAFE is a resampling-based method for testing
   functional categories is gene expression experiments. SAFE
@@ -11,5 +11,5 @@ Depends: R (>= 2.4.0), Biobase, annotate, methods
 Imports: SparseM, GO.db, annotate, AnnotationDbi, survival, Biobase
 Suggests: GO.db, GOstats, Rgraphviz, multtest, hu6800.db, survival
 Maintainer: William T. Barry <bill.barry@duke.edu>
-License: GPL version 2 or newer
+License: GPL (>= 2)
 URL: http://www.duke.edu/~dinbarry/SAFE/
