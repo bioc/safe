@@ -17,12 +17,12 @@ safe(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = NULL
 \arguments{
   \item{X.mat}{ A matrix or data.frame of expression data; each row corresponds to a gene
     and each column to a sample. Data can also be given as the Bioconductor class
-    \code{\link[Biobase:ExpressionSet-class]{ExpressionSet}}.
+    \code{\link[Biobase:class.ExpressionSet]{ExpressionSet}}.
     Data should be properly normalized and may not contain missing values.}
   \item{y.vec}{a numeric, integer or character vector of length \code{ncol(X.mat)}
     containing the response of interest. If \code{X.mat} is an
-    \code{\link[Biobase:ExpressionSet-class]{ExpressionSet}}, \code{y.vec} can also be the name or
-    column number of a covariate in the \code{\link[Biobase:phenoData-class]{phenoData}}
+    \code{\link[Biobase:class.ExpressionSet]{ExpressionSet}}, \code{y.vec} can also be the name or
+    column number of a covariate in the \code{\link[Biobase:defunct]{phenoData}}
     slot. For examples of the acceptable forms \code{y.vec} can take, see the vignette. }
   \item{C.mat}{ A matrix or data.frame containing the gene category assignments. Each column
     represents a category and should be named accordingly. For each column, values of
