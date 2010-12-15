@@ -13,4 +13,4 @@ Suggests: GO.db, GOstats, Rgraphviz, multtest, hu6800.db, survival
 Maintainer: William T. Barry <bill.barry@duke.edu>
 License: GPL (>= 2)
 URL: http://www.duke.edu/~dinbarry/SAFE/
-biocViews: GeneExpression
+biocViews: GeneExpression, FunctionalAnnotation
