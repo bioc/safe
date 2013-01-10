@@ -1,252 +1,308 @@
-`safe` <-
-function(X.mat, y.vec, C.mat = NULL, platform = NULL, annotate = NULL, Pi.mat = NULL, 
-         local="default", global = "Wilcoxon", args.local = NULL, 
-         args.global = list(one.sided=FALSE), error = "none", alpha = NA, 
-         method = "permutation", min.size = 2, max.size = Inf, ...){
+safe <-
+function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
+         platform = NULL, annotate = NULL, min.size = 2, max.size = Inf, by.gene = FALSE,
+         local="default", global = "default", args.local = NULL, args.global = list(one.sided=FALSE),
+         Pi.mat = NULL, error = "FDR.BH", alpha = NA, epsilon = 10^(-10), print.it=TRUE, ...){
 
-  if(is(X.mat,"exprSet")) {
-    require("Biobase")
-    pData <- pData(X.mat)
-    X.mat <- exprs(X.mat)
-    if (length(y.vec) == 1){
-      if(is.character(y.vec)){
-       if(y.vec %in% names(pData)) y.vec <- pData[[y.vec]] else {
-         stop(paste("y.vec = '", y.vec, "' is not a column in pData(X.mat)",sep=""),call.=FALSE) }
-      } else { 
-       if(y.vec <= dim(pData)[[2]]) y.vec <- pData[[y.vec]] else {
-         stop(paste("y.vec =",y.vec, " is not a column # in pData(X.mat)"),call.=FALSE) }
-      }
-    }
-  }
-  if (length(y.vec)!=dim(X.mat)[[2]]) {
-    stop("Dimensions of X.mat and y.vec do not conform",call.=FALSE)}
-  X.mat <- as.matrix(X.mat)
+## X.mat: Object of class 'matrix'; expression estimates where
+##        each row corresponds to a gene and each column to a sample.
+## y.vec: Object of class 'numeric', 'integer' or 'character' with response.
+## Z.mat: Optional object of class 'matrix' each row corresponds to sample and each column a covariate
+## method: Character string of SAFE methodto use: "permutation","bootstrap.t", "bootstrap.q", or "express"
+## C.mat: Object of class 'matrix' or 'list' with gene category assignments.
+## platform: A character string of a Bioconductor annotation package to build gene categories.
+## annotate: A character string to specify the set of categories to build.
+## min.size: Optional minimum category size to be built.
+## max.size: Optional maximum category size to be built
+## by.gene:  Logical as to whether multiple probesets to a single gene should be downweighted
+## local: Character string for the gene-specific statistic; following are included in SAFE
+##        "t.Student","t.Welch", "t.SAM", "f.ANOVA", "t.LM" and "z.COXPH"
+## global: Character string for the global statistic; the following are included in SAFE
+##         "Wilcoxon", "Fisher", "Pearson", "AveDiff")
+## args.local: An optional list to be passed to local statistics that require additional arguments.
+## args.global: An optional list to be passed to global statistics that require additional arguments.
+## Pi.mat: Either a 'matrix' permutations, or an integer of permutations to build.
+## error: Character string of method to compute error rate estimates; the following are included in SAFE
+##        "FDR.YB";"FWER.WY";"FWER.Bonf";"FDR.BH"; "none"
+## alpha: Criterion for significance after adjusting for multiple comparison.
+## epsilon: Minimum difference for ranking local and global statistics.
+##    ...: Allows arguments from version 1.0 to be ignored
+  require(SparseM)
+#### 0) Set up objects
+  if(!class(X.mat) %in% c("matrix","data.frame"))
+      stop("SAFE v3.* nolonger supports exprSet and other S4 class objects.",call.=FALSE)
 
+  if(length(y.vec)!=ncol(X.mat))
+      stop("Dimensions of X.mat and y.vec do not conform",call.=FALSE)
+
+  if(!is.null(Z.mat)){
+    if(length(y.vec)!=nrow(Z.mat))
+        stop("Dimensions of Z.mat and y.vec do not conform",call.=FALSE)
+    X.mat <- getXYresiduals(X.mat,y.vec,Z.mat)
+    df.p  <- X.mat$df.p
+    y.vec <- X.mat$y.star
+    X.mat <- X.mat$X.star
+  } else df.p <- 0
+  ## b) Get Categories
   if(is.null(C.mat)){
     if(is.null(platform) | is.null(annotate)){
-      stop("C.mat or platform&annotate must be specified",call.=FALSE) 
+      stop("C.mat or platform & annotate must be specified",call.=FALSE)
     } else {
       require(platform,character.only=TRUE)
       platform <- sub("[.]db$","",platform)
-      names <- names(as.list(get(paste(platform,"ACCNUM",sep=""))))
-      if (is.null(dimnames(X.mat)[[1]]) | (sum(dimnames(X.mat)[[1]] %in% names)==0) ) {
-        stop(paste("row.names of X.mat do not conform with the '",platform,"' platform",sep=""),call.=FALSE)}
+      probes <- names(as.list(get(paste(platform,"ACCNUM",sep=""))))
+      if (is.null(rownames(X.mat)) | (!prod(rownames(X.mat) %in% probes))) {
+        stop(paste("row labels of X.mat do not conform with ",platform,sep=""),call.=FALSE)}
       if(substr(annotate[1],1,3)=="GO."){
         cat(paste("Building ",annotate," categories from ",platform,"GO2ALLPROBES\n",sep=""))
-        C.mat <- getCmatrix(keyword.list = as.list(get(paste(platform,"GO2ALLPROBES",sep=""))), 
-                            present.genes = dimnames(X.mat)[[1]], min.size = min.size,
-                            max.size = max.size, GO.ont = substr(annotate,4,5))        
+        C.mat <- getCmatrix(keyword.list = as.list(get(paste(platform,"GO2ALLPROBES",sep=""))),
+                            present.genes = rownames(X.mat), min.size = min.size, by.gene = by.gene,
+                            max.size = max.size, GO.ont = substr(annotate,4,5))
         C.names <- C.mat$col.names
         C.mat <- C.mat$C.mat.csr
       } else if(annotate=="KEGG"){
         cat(paste("Building ",annotate," categories from ",platform,"PATH\n",sep=""))
-        C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PATH",sep=""))), 
-                            present.genes = dimnames(X.mat)[[1]], min.size = min.size,
-                            max.size = max.size)
+        C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PATH",sep=""))),
+                            present.genes = rownames(X.mat), min.size = min.size,
+                            max.size = max.size, by.gene = by.gene)
         C.names <- paste("KEGG:",C.mat$col.names,sep="")
         C.mat <- C.mat$C.mat.csr
       } else if(annotate=="PFAM"){
         cat(paste("Building ",annotate," categories from ",platform,"PFAM\n",sep=""))
-        C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PFAM",sep=""))), 
-                            present.genes = dimnames(X.mat)[[1]], min.size = min.size,
-                            max.size = max.size)
-        C.names <- paste("PF",substr(C.mat$col.names,3,100),sep="")
+        C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PFAM",sep=""))),
+                            present.genes = rownames(X.mat), min.size = min.size,
+                            max.size = max.size, by.gene = by.gene)
+        C.names <- paste("PFAM:",substr(C.mat$col.names,3,100),sep="")
         C.mat <- C.mat$C.mat.csr
-      } else stop(paste("Annotate = '",annotate,"' not recognized",sep=""),call.=FALSE)
+      } else stop(paste("Annotate = \"",annotate,"\" not recognized",sep=""),call.=FALSE)
    }
   } else if(class(C.mat)=="matrix"){
-    C.names <- dimnames(C.mat)[[2]]
+    C.names <- colnames(C.mat)
+    if(is.null(C.names)){
+        C.names <- paste("Column",1:ncol(C.mat))
+        cat("Warning: Arbitrary columns names generated for categories \n")
+    }
     C.mat <- as.matrix.csr(C.mat)
-    if (sum(dimnames(X.mat)[[1]]!=dimnames(C.mat)[[1]])>0) {
-      cat("Warning: gene labels do not match between X.mat and C.mat")}
-  } else {
-    C.names <- C.mat$col.names
-    C.mat <- C.mat$C.mat.csr
-  }
-
-  if (dim(C.mat)[[1]]!=dim(X.mat)[[1]]) {
+    if (sum(rownames(X.mat)!=rownames(C.mat)))
+      cat("Warning: gene labels do not match between X.mat and C.mat \n")
+  } else { C.names <- C.mat$col.names; C.mat <- C.mat$C.mat.csr }
+  if (nrow(C.mat)!=nrow(X.mat)) {
     stop("Dimensions of X.mat and C.mat do not conform",call.=FALSE)}
-  
-  num.cats  <- dim(C.mat)[[2]]
-  num.genes <- dim(X.mat)[[1]]
-  num.arrays<- dim(X.mat)[[2]]
 
+  num.cats  <- ncol(C.mat)
+  num.genes <- nrow(X.mat)
+  num.arrays<- ncol(X.mat)
+
+#### 1) Safe-express
+### UPDATED 6/20
+  if(method=="express"){
+    if(!local %in% c("default","Score"))
+      cat("WARNING: Only Score statistics can be used in safe-express \n")
+    local <- "Score"
+    if(!global %in% c("default","D","U","V"))
+      cat(paste("WARNING: global = \"",global,"\" not available in safe-express\n",sep=""))
+    if(!global %in% c("D","U","V")) global <- "D"
+    if(error %in% c("FWER.WY","FDR.YB")){
+      cat(paste("WARNING: error = \"",error,"\" not available in safe-express \n",sep=""))
+      error <- "none"
+    }
+    if(!prod(unique(as.matrix(C.mat)) %in% 0:1))
+       stop("Soft categories not available in safe-express",call.=FALSE)
+
+    if (length(unique(y.vec)) == 2) if (!prod(y.vec %in% 0:1)) {
+        cat(paste("Warning: y.vec is not (0,1), thus Group 1 ==",y.vec[1], "\n"))
+        y.vec <- (y.vec == y.vec[1]) * 1
+    }
+
+    C.list <- apply(as.matrix(C.mat)==1,2,which)
+
+    if(is.null(args.global$grid.length))  grid  <- 100   else grid  <- args.global$grid.length
+    if(is.null(args.global$gamma.thresh)) gamma <- 0.01  else gamma <- args.global$gamma.thresh
+    if(is.null(args.global$method.bivar)) mb <- "exact"  else mb    <- args.global$method.bivar
+    if(is.null(args.global$swivel))       sw  <- 1e-4    else sw    <- args.global$swivel
+    if(is.null(args.global$parallel))     para  <- FALSE else para  <- args.global$parallel
+    if(is.null(args.global$num.cores))    ncor  <- 1     else ncor  <- args.global$num.cores
+
+    express <- safe.express(X.mat = X.mat, y.vec = y.vec, C.list = C.list,
+                            df.penalty = df.p, method = global, gamma.thresh = gamma,
+                            method.bivar = mb, grid = grid, swivel = sw,
+                            parallel = para, num.cores=ncor)
+
+    if(global=="D") {global.pval <- unlist(express$global.D[,2]); global.stat <- unlist(express$global.D[,1])}
+    if(global=="V") {global.pval <- unlist(express$global.V[,2]); global.stat <- unlist(express$global.V[,1])}
+    if(global=="U") {global.pval <- unlist(express$global.U[,2]); global.stat <- unlist(express$global.U[,1])}
+    if (error == "none"){
+      global.error <- as.numeric(rep(NA,num.cats))
+      if(is.na(alpha)) alpha <- 0.05
+    } else {
+      global.error <- get(paste("error",error,sep="."))(t(global.pval))
+            if(is.na(alpha)) alpha <- 0.1
+    }
+
+    local.stat <- express$local.stat
+    local.pval <- pchisq(local.stat^2,1,lower.tail=F)
+    names(local.stat) <- names(local.pval) <- rownames(X.mat)
+    names(global.stat) <- names(global.pval) <- names(global.error) <- C.names
+
+    return(new("SAFE",local=local, local.stat=local.stat, local.pval=local.pval, global=global,
+           global.stat=global.stat, global.pval=global.pval, error=error, alpha=alpha,
+           global.error=global.error, C.mat=C.mat, method=method))
+  }
+#################
+#### 0.2) Else, more set up
   if (local=="default") {
     if (length(unique(y.vec)) == 2){
-      local <- "t.Student" 
+      local <- "t.Student"
     }  else if(class(y.vec)=="character") {
       local <- "f.ANOVA"
     } else  local <-  "t.LM"
   }
-  
-  if(is.null(Pi.mat)) {
-    if(method %in% c("bootstrap","bootstrap.t")) Pi.mat <- 200 else Pi.mat <- 1000
-  }
-  if(length(unlist(Pi.mat))==1) { if(Pi.mat > 1){
-    n <- length(y.vec)
-    num.perms <- Pi.mat
-    if(local %in% c("t.paired")){ 
-      if(method!="permutation") count <- factorial(n/2) else count <- 2^(n/2-1)
-      Pi.mat <- getPImatrix(block.vec = y.vec, K = Pi.mat, method = method)
-    } else if(local %in% c("t.LM","f.GLM","z.COXPH")) {
-      if(method!="permutation") count<-sum(choose(n,k=2:n)*choose(n-1,k=1:(n-1))) else {
-         count <- factorial(n) }
-      Pi.mat <- getPImatrix(n = length(y.vec), K = Pi.mat, method = method)
-    } else {
-      n2 <- table(y.vec)
-      n3 <- 1
-      for(i in 1:length(n2)) n3<-n3*sum(choose(n2[i],k=2:n2[i])*choose(n2[i]-1,k=1:(n2[i]-1)))
-      if(method!="permutation") count<-n3  else count<-exp(lgamma(n+1) - sum(lgamma(n2+1)))
-      Pi.mat <- getPImatrix(y.vec = y.vec, K = Pi.mat, method = method)
-    }
-    if(count<num.perms) cat(paste("Warning: only",round(count),"resamples exist\n"))
-  } else num.perms <- 1 } else {
-   num.perms <- dim(Pi.mat)[[1]]
-   if(length(y.vec)!=dim(Pi.mat)[[2]]) {
-     stop("Dimensions of Pi.mat and y.vec do not conform",call.=FALSE)}
-  }  
- 
-#  print(Pi.mat[1:3,])
-   
-  local.stat <- get(paste("local",local,sep="."))(X.mat,y.vec,args.local) 
-  u.obs <- local.stat(data = X.mat)
-  names(u.obs) <- dimnames(X.mat)[[1]]
+  if (global=="default") global <- "Wilcoxon"
+
+  local.stat <- get(paste("local",local,sep="."))(X.mat,y.vec,args.local)
+  u.obs  <- local.stat(data = X.mat)
+  u.pval <- as.numeric(rep(NA,num.genes))
 
   if(!is.logical(args.global$one.sided)) stop("args.global$one.sided is missing or incorrect",call.=FALSE)
   global.stat <- get(paste("global",global,sep="."))(C.mat,u.obs,args.global)
 
-  v.obs <- global.stat(u.obs)
-  names(v.obs) <- C.names
+  v.obs  <- global.stat(u.obs)
+  v.pval <- as.numeric(rep(NA,num.cats))
 
-  if(length(unlist(Pi.mat))==1) {
-    return(new("SAFE", local=local, local.stat=u.obs, local.pval=as.numeric(rep(NA,num.genes)),
-               global=global, global.stat=v.obs, global.pval=as.numeric(rep(NA,num.cats)),
-               error=error, global.error=as.numeric(rep(NA,num.cats)), alpha=as.numeric(alpha),
-               C.mat=C.mat, method=method))
-  } 
+  ## b) Get resamples
+  if(is.null(Pi.mat)) if(substr(method,1,4)=="boot") Pi.mat <- 200 else Pi.mat <- 1000
 
+  if(!is.matrix(Pi.mat)){
+  if(Pi.mat==1) {
+    names(u.pval) <- names(u.obs) <- rownames(X.mat)
+    names(v.pval) <- names(v.obs) <- C.names
+    return(new("SAFE", local=local, local.stat=u.obs, local.pval=u.pval,
+               global=global, global.stat=v.obs, global.pval=v.pval,
+               error=error, global.error=v.pval, alpha=1,
+               C.mat=C.mat, method="no resampling"))
+  } else {
+    num.perms <- Pi.mat; n = num.arrays
+    if(local %in% c("t.paired")){
+      if(method!="permutation") count <- factorial(n/2) else count <- 2^(n/2-1)
+      if(count < num.perms) cat(paste("Warning: only",round(count),"unique resamples exist\n"))
+      Pi.mat <- getPImatrix(block.vec = y.vec, K = num.perms, method = method)
+    } else if(local %in% c("t.Student","t.Welch") & method=="permutation"){
+      count <- choose(n,table(y.vec)[1])
+      if(count<num.perms){
+         cat(paste("Warning: only",round(count),"unique resamples exist\n",
+                   "         switching to exhaustive permutation\n"))
+         Pi.mat <- getPIcomplete(y.vec)
+         num.perms <- nrow(Pi.mat)
+      } else Pi.mat <- getPImatrix(y.vec = y.vec, K = num.perms, method = method)
+    } else if(local %in% c("f.ANOVA","t.Student","t.Welch")){
+      n2 <- table(y.vec); n3 <- 1
+      for(i in 1:length(n2)) n3 <- n3*sum(choose(n2[i],k=2:n2[i])*choose(n2[i]-1,k=1:(n2[i]-1)))
+      if(method!="permutation") count<-n3  else count <- exp(lgamma(n+1) - sum(lgamma(n2+1)))
+      if(count < num.perms) cat(paste("Warning: only",round(count),"unique resamples exist\n"))
+      Pi.mat <- getPImatrix(y.vec = y.vec, K = Pi.mat, method = method)
+    } else  if(local %in% c("t.LM","z.COXPH")) {
+      if(method!="permutation") count<-sum(choose(n,k=2:n)*choose(n-1,k=1:(n-1))) else
+         count <- factorial(n)
+      if(count < num.perms) cat(paste("Warning: only",round(count),"unique resamples exist\n"))
+      Pi.mat <- getPImatrix(n = length(y.vec), K = Pi.mat, method = method)
+    } else {
+      Pi.mat <- getPImatrix(n = length(y.vec), K = Pi.mat, method = method)
+    }
+  }
+  } else {
+    num.perms <- nrow(Pi.mat)
+    if(length(y.vec)!=ncol(Pi.mat))
+       stop("Dimensions of Pi.mat and y.vec do not conform",call.=FALSE)
+  }
+
+
+#### 2) Permutation testing
   if(method== "permutation"){
     u.pvalue <- rep(1/num.perms, num.genes)
-    names(u.pvalue) <- dimnames(X.mat)[[1]]
-
     if(error == "none"){
+      error.p  <- v.pval
       emp.p <- rep(1/num.perms,num.cats)
-      names(emp.p) <- C.names 
-    } else {
+      for(i in 2:num.perms){
+        u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
+        u.pvalue <- u.pvalue + (abs(u) >= (abs(u.obs) + epsilon)) / num.perms
+        v <- global.stat(u)
+        emp.p <- emp.p + (v>=(v.obs + epsilon))/num.perms
+        if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
+      }
+      if(is.na(alpha)) alpha <- 0.05
+     } else {
       V.mat <- matrix(0,num.perms,num.cats)
       V.mat[1,] <- v.obs
-    } 
-
-    for(i in 2:num.perms){
-      u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
-      u.pvalue <- u.pvalue + (abs(u) >= abs(u.obs)) / num.perms
-
-      v <- global.stat(u)
-      if(error == "none") emp.p <- emp.p + (v>=v.obs)/num.perms else V.mat[i,] <- v 
-      if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))  
-    }
-
-    if((global=="Fisher") & (!is.null(args.global$genelist.cutoff))){
-        size <- (rep(1,length(u.obs)) %*% C.mat)[1,]
-        if(args.global$one.sided) L <- sum(u.obs >= args.global$genelist.cutoff) else {
-                                L <- sum(abs(u.obs) >= args.global$genelist.cutoff)}
-        v.obs <- 1+ qhyper(v.obs,size,num.genes-size,L)
-    }
-
-    if (error != "none"){
+      for(i in 2:num.perms){
+        u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
+        u.pvalue <- u.pvalue + (abs(u) >= (abs(u.obs) + epsilon)) / num.perms
+        V.mat[i,] <- global.stat(u)
+        if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
+      }
       P.mat <- (num.perms + 1 - apply(V.mat,2,rank,ties.method="min")) / num.perms
-      dimnames(P.mat)[[2]] <- dimnames(C.mat)[[2]]  
-
-      error.p<-get(paste("error",error,sep="."))(P.mat)
-      names(error.p) <- C.names
+      error.p <-get(paste("error",error,sep="."))(P.mat)
+      emp.p <- P.mat[1,,drop=TRUE]
       if(is.na(alpha)) alpha <- 0.1
-
-      return(new("SAFE",local=local, local.stat=u.obs, local.pval=u.pvalue, global=global,
-             global.stat=v.obs, global.pval=P.mat[1,,drop=TRUE], error=error, alpha=alpha,
-             global.error=error.p, C.mat=C.mat, method=method))
-    } else {
-      if(is.na(alpha)) alpha <- 0.05
-      return(new("SAFE",local=local, local.stat=u.obs, local.pval=u.pvalue, global=global,
-             global.stat=v.obs, global.pval=emp.p, error=error, alpha=alpha,
-             global.error=as.numeric(rep(NA,num.cats)), C.mat=C.mat, method=method))
     }
- 
-  } else if(method=="bootstrap" | method=="bootstrap.t" |  method=="bootstrap.q"){
+    names(u.pvalue) <- names(u.obs) <- rownames(X.mat)
+    names(error.p) <- names(emp.p) <- names(v.obs) <- C.names
+    return(new("SAFE",local=local, local.stat=u.obs, local.pval=u.pvalue, global=global,
+           global.stat=v.obs, global.pval=emp.p, error=error, alpha=alpha,
+           global.error=error.p, C.mat=C.mat, method=method))
 
-    if(local %in% c("f.GLM")){
-      stop(paste("local = \"", local,"\" can not be used in the bootstrap"),call.=FALSE)}
-    if(!global %in% c("Wilcoxon","Pearson","AveDiff")){
-      stop(paste("global = \"", global,"\" cant be used in the bootstrap"),call.=FALSE)}
-    if(!error %in% c("none","FWER.Bonf","FWER.Holm","FDR.BH")){
+#### 3) Bootstrap testing
+  } else if(method=="bootstrap" | method=="bootstrap.t" |  method=="bootstrap.q"){
+    if(local %in% c("f.GLM"))
+      stop(paste("local = \"", local,"\" can not be used in the bootstrap"),call.=FALSE)
+    if(global %in% c("Kolmogorov","Fisher"))
+      stop(paste("global = \"", global,"\" cant be used in the bootstrap"),call.=FALSE)
+    if(error %in% c("FWER.WY","FDR.YB")){
       cat(paste("WARNING: error = \"",error,"\" not available in bootstrap\n",sep=""))
       error="none"
     }
- 
-    if(is.null(args.local$boot.test)){
-      u.pvalue <-  rep(NA, num.genes)
-    } else if(args.local$boot.test=="q"){
-      u.pvalue <-  rep(1/num.perms, num.genes)
-    } else if(args.local$boot.test=="t"){
-      u.pvalue <-  rep(NA, num.genes)
-      u.sum <- u.obs 
-      u2.sum <- u.obs^2
-      null.local <- 0
-    } else {
-      cat(paste("WARNING: args.local$boot.test = \"",args.local$boot.test,
-                "\" not recognized\n",sep=""))
-      u.pvalue <-  rep(NA, num.genes)
-      args.local$boot.test <- NULL
-    }
-    names(u.pvalue) <- dimnames(X.mat)[[1]]
-     
+
+    u.pvalue <-  rep(1/num.perms, num.genes)
+    u.sum <- u.obs ; u2.sum <- u.obs^2
+    null.local <- 0
+
     emp.p <- rep(1/num.perms,num.cats)
-    names(emp.p) <- C.names
 
     if(global=="Wilcoxon"){
       C.size <- (rep(1,num.genes) %*% C.mat)[1,]
-      null.global <- (num.genes + 1) * C.size / 2 
+      null.global <- (num.genes + 1) * C.size / 2
     } else null.global = 0
 
-    v.sum <- v.obs 
-    v2.sum <- v.obs^2
+    v.sum <- v.obs ; v2.sum <- v.obs^2
 
     for(i in 2:num.perms){
       u <- local.stat(data = X.mat[,Pi.mat[i,]], vector = y.vec[Pi.mat[i,]], resample = Pi.mat[i,])
-      if(!is.null(args.local$boot.test)){
-        if(args.local$boot.test=="q"){
-          u.pvalue <- u.pvalue + (u*sign(u.obs) <= 0)/num.perms
-        } else {u.sum <- u + u.sum ; u2.sum <- u^2 + u2.sum}
-      }
+      u.sum <- u + u.sum ; u2.sum <- u^2 + u2.sum
+      u.pvalue <- u.pvalue + (u*sign(u.obs) <= -epsilon)/num.perms
+
       v <- global.stat(u)
-      v.sum <- v + v.sum
-      v2.sum <- v^2 + v2.sum
-      emp.p <- emp.p + (v <= null.global)/num.perms
-      if (trunc(i/100)==i/100) cat(paste(i,"bootstrap resamples completed\n"))
+      v.sum <- v + v.sum; v2.sum <- v^2 + v2.sum
+      emp.p <- emp.p + (v <= (null.global - epsilon))/num.perms
+      if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"bootstrap resamples completed\n"))
     }
-    
-    
+
     if(method=="bootstrap" | method=="bootstrap.t"){
-      emp.p <-  1 - pt(((v.sum / num.perms) - null.global) / sqrt((v2.sum - v.sum^2 / 
+      emp.p <-  1 - pt(((v.sum / num.perms) - null.global) / sqrt((v2.sum - v.sum^2 /
                 num.perms) / (num.perms - 1)), df = num.arrays - 1)
-    } 
-    
-    if(!is.null(args.local$boot.test)) if(args.local$boot.test=="t") {
-      u.pvalue <- 1- pt(abs(u.sum / num.perms) / sqrt((u2.sum - u.sum^2 / 
+      u.pvalue <- 1- pt(abs(u.sum / num.perms) / sqrt((u2.sum - u.sum^2 /
                   num.perms) / (num.perms - 1)) ,df = num.arrays - 1)
     }
+
     if (error == "none"){
+      error.p <- as.numeric(rep(NA,num.cats))
       if(is.na(alpha)) alpha <- 0.05
-      return(new("SAFE",local=local, local.stat=u.obs, local.pval=as.numeric(u.pvalue), global=global,
-             global.stat=v.obs, global.pval=emp.p, error=error, alpha=alpha,
-             global.error=as.numeric(rep(NA,num.cats)), C.mat=C.mat, method=method))
     } else {
       error.p<-get(paste("error",error,sep="."))(t(emp.p))
-      names(error.p) <- C.names
       if(is.na(alpha)) alpha <- 0.1
-      return(new("SAFE",local=local, local.stat=u.obs, local.pval=as.numeric(u.pvalue), global=global,
+    }
+    names(u.pvalue) <- names(u.obs) <- rownames(X.mat)
+    names(error.p) <- names(emp.p) <- names(v.obs) <- C.names
+    return(new("SAFE",local=local, local.stat=u.obs, local.pval=as.numeric(u.pvalue), global=global,
              global.stat=v.obs, global.pval=emp.p, error=error, alpha=alpha,
              global.error=error.p, C.mat=C.mat, method=method))
-    }
-  }
+  } else stop(paste("method = \"", method,"\" is not recognized",sep=""),call.=FALSE)
 }
-
