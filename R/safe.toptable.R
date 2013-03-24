@@ -4,9 +4,8 @@ function(safe, number=10, annotate = c("GO","KEGG","PFAM"),
 ##  safe: Objects of class 'SAFE'
 ##  number: number of top categories to return
 ##  annotate: Charcter vector of pathway annotation(s) for "GO" and "KEGG" categories
-##  1. Added pretty=T/F option to call sigfigs 0719 AS
-##  2. Added annotation for "PFAM" categories 0719 AS
-##  3. Added description=T/F option to supress Description column 0726 AS
+##  pretty: whether or not to call sigfigs() for rounding
+##  description: whether or not to show Description column
   require(SparseM)
   if(description){
     names <- names(safe@global.stat)

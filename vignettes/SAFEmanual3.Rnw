@@ -49,7 +49,9 @@ The following lists summarize the changes and extended capability of \texttt{saf
 
 \item \texttt{safe} is modified to include the novel analytic approximations to permutation-testing proposed in Zhou {\em et al.} (under review) using a dependent package, \texttt{safeExpress}. Users interested in this method should contact any of the co-authors for the package source, which can be installed on any operating system.
 
-\item The internal function \texttt{getCmatrix} is updated with an optional argument, \texttt{by.gene = TRUE}, to consider pathways at the gene-level instead of the probeset-level.
+\item New functionality is added to \texttt{safe} to implement parallel processing. Usage instructions and examples of improved execution times are given in section \ref{sec:parallel}.
+
+\item The internal function \texttt{getCmatrix} is updated for improved efficiency and a new optional argument, \texttt{by.gene = TRUE}, to consider pathways at the gene-level instead of the probeset-level.
 
 \item For basic experimental designs, \texttt{safe} automatically switches to exhaustive permutation when there are fewer than what is specified by the default or user. The default for \texttt{method = "permutation"} remains \texttt{Pi.mat = 1000}.
 \end{itemize}
@@ -374,6 +376,56 @@ P-values for local statistics are calculated under bootstrap resampling, using e
 By default, the data are resampled $B = 1000$ times when performing permutation or quantile bootstrap tests. However, with minimum empirical p-values of $\frac{1}{B}$, this may not be sufficient when testing hundreds or thousands of categories, and $\geq 10$-fold more resamples could be needed if there are several hundred categories being investigated. The Gaussian bootstrap-based test has the advantage that empirical p-values are not bounded by the total number of resamples taken, such that small p-values can be obtained without intensive computational effort.
 
 Moreover, because permutation-resampling is intensive in computation time and memory requirements, we have recently developed accurate analytic approximations to permutations of score statistics that have good performance for even relatively small sample sizes (Zhou {\em et al.}, under review). This approach preserves the essence of controlling Type I error by permutation pathway analysis, but with greatly reduced computation, and is more accurate than competing moment-based approaches in common use. The method has improved properties, in terms of mean square error, over the common use of random sampling to select permutations. These algorithms have been written into a new R package, \texttt{safeExpress}, which can be called internally by \texttt{safe} using the argument \texttt{method = express}, so that the output is provided as a {\em SAFE} object. The \texttt{safeExpress} package is available by request to any of the vignette coauthors.
+
+
+\section{Parallel processing}
+\label{sec:parallel}
+The default method in \texttt{safe} calculates p-values empirically by resampling. While standard \texttt{R} conducts each operation sequentially, under parallel processing multiple computational tasks are executed simultaneously on separate computer processing cores. A new feature in \texttt{safe} allows users to take advantage of the multiple computing cores commonly available on servers and PCs to get substantial improvements in computing time by conducting bootstrap or permutation resampling in parallel. Similar improvements are seen with numerical approximations in \texttt{method = "express"} by testing individual categories in parallel.
+
+\subsection{Implementation}
+When executing \texttt{safe} with any available method (permutation, bootstrapping, or ``express''), with \texttt{error = "none", "FWER.Bonf",} or \texttt{"FDR.BH"}, users can specify the optional parameter \texttt{parallel = TRUE} to leverage parallel processing. Within \texttt{safe}, the \texttt{foreach} package is implemented for parallel execution of the requested method for the primary analysis. The \texttt{foreach} package provides a ``frontend'' for any available parallel ``backend'' initialized prior to calling the \texttt{safe} function. The \texttt{foreach} package is compatible with a variety of backends supporting \texttt{\%dopar\%} functionality, and has been tested successfully with \texttt{doMC, doMPI, doParallel}, and \texttt{doSNOW}. An example invocation is given below, but users should consult the documentation of these packages for more information on how to initialize a parallel backend prior to invoking \texttt{safe} with \texttt{parallel = TRUE}. Upon execution, if no such backend is available, the analysis will proceed in sequence, so conditional coding is not required, ensuring code portability. When running in parallel, \texttt{safe} uses the \texttt{doRNG} package to allow users to set seeds for random number generation, enabling reproducible analyses.
+
+<<eval=FALSE>>=
+#Initialize parallel backend
+library(doParallel)
+registerDoParallel(cores=4)
+
+set.seed(12345)
+results <- safe(e3.upp, p3.upp$p53, platform = "hgu133a.db",
+                annotate = "KEGG", print.it = FALSE, parallel=TRUE)
+@ 
+
+\subsection{Comparison of methods}
+To demonstrate the efficiency gains possible under parallel processing, a comparison study was conducted using the Miller {\em et al.} (2005) data to compare performance in a variety of scenarios. To illustrate the breadth of conditions under which SAFE may be implemented, ``large'' and ``small'' numbers of samples, probesets, and categories were combined, forming eight different scenarios for testing. The large sample size uses all of the phenotype data (251 samples), while the small sample size is limited to only those samples indicated as Grade 3 (54 samples). The large probeset scenarios use all probesets from the complete Affymetrix hgu133a array (44928 probesets), while the small scenarios drop the Affymetrix control probesets and truncate the data to one probeset per gene (12702 probesets). Finally, the large and small sets of categories are constructed using the Gene Ontology pathways (12140 or 13873 categories) or the Protein Families database (2061 or 2764 categories), respectively, depending on the number of probesets being used. 
+
+\begin{table}
+  \centering
+  \begin{tabular}{|l|l|l||c|c|c||c|c|c|}
+  \hline
+  &   &   & Sequential & Parallel & Rel- & Sequential & Parallel  & Rel- \\
+n & m & C & Permutation & Permutation & ative & Bootstrap & Bootstrap & ative \\
+\hline
+S & S & S & 81.5 & 21.0 & 3.9 & 17.8 & 5.5 & 3.2 \\
+S & L & S & 265.8 & 59.9 & 4.4 & 44.0 & 15.2 & 2.9 \\
+L & S & S & 319.5 & 79.1 & 4.0 & 62.9 & 16.8 & 3.7 \\
+S & S & L & 330.0 & 75.7 & 4.4 & 68.3 & 17.1 & 4.0 \\
+L & S & L & 418.4 & 126.0 & 3.3 & 127.2 & 26.5 & 4.8 \\
+S & L & L & 581.4 & 149.7 & 3.9 & 125.7 & 33.1 & 3.8 \\
+L & L & S & 1380.2 & 343.9 & 4.0 & 246.5 & 65.7 & 3.8 \\
+L & L & L & 1476.6 & 368.3 & 4.0 & 246.3 & 74.1 & 3.3 \\
+\hline
+  \end{tabular}
+  \caption{Average run time (seconds) over 10 executions. ``Relative'' columns give sequential execution time divided by parallel execution time. ``S'' and ``L'' indicate small or large testing scenario parameters. }
+  \label{tab:comp4}
+\end{table}
+
+Sequential and parallel analyses using the permutation method used the default setting of 1000 permutations, and bootstrapping methods used the default of 200 bootstrap resamplings. The analyses for each testing scenario was repeated 10 times, and the resulting average processing times are summarized in table \ref{tab:comp4}. Table \ref{tab:comp4} was generated using 4 parallel processing cores on a 64-bit Debian server with two dual-core AMD Opteron processors (four cores total) with 16GB of RAM, running \texttt{R} version 2.15.2. As expected, parallel executions of the permutation method were 4-4.5 times faster than sequential executions, and parallel executions of the bootstrapping method were 3-5 times faster.
+
+\begin{center}
+  \includegraphics[width=3.5in]{SAFEmanual3-parallel}
+\end{center}
+
+Because computational overhead is minimal outside of the resampling loop, executions times increase linearly with the number of resamplings but decrease linearly with the number of cores. The analyses for the permutation method for two testing scenarios were repeated 10 times each using an increasing number of parallel processing cores on a 64-bit Debian server with a six-core Intel i7-3960X Extreme processor with 48GB of RAM, running \texttt{R} version 2.15.2. The resulting processing times, relative to the sequential execution time, are summarized in the figure above. The S-S-S and L-L-L scenarios correspond to those described for table \ref{tab:comp4}. As the number of samples, probesets, or categories in the data is increased, so is the computational burden of the resampling loop relative to that outside the loop. Thus parallel processing shows more substantial improvement relative to sequential processing for larger data sets.  
 
 
 \section{Visualizing pathway-level association in SAFE}

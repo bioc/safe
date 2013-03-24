@@ -2,6 +2,7 @@ gene.results <-
 function (object, cat.name = NULL, error = "none",
           print.it = TRUE, gene.names = NULL)
 {
+## gene.names: optional char vector of gene annotation
     if (!error %in% c("none", "FWER.Bonf", "FWER.Holm", "FDR.BH")) {
         cat(paste("WARNING: error = \"", error, "\" not available for local statistics\n",
             sep = ""))
@@ -33,7 +34,7 @@ function (object, cat.name = NULL, error = "none",
         table <- table[order(table[, 4], partial = -table[, 1] *
             sign(table[, 1])), , drop = FALSE][, 1:3, drop = FALSE]
     }
-    if (!is.null(gene.names)) { #insert gene.names col 0731ABS
+    if (!is.null(gene.names)) {
       table <- data.frame(Gene.Names = gene.names[rownames(table)],
                           table, stringsAsFactors = FALSE)
     }

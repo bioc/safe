@@ -1,8 +1,8 @@
 safe <-
-function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
-         platform = NULL, annotate = NULL, min.size = 2, max.size = Inf, by.gene = FALSE,
-         local="default", global = "default", args.local = NULL, args.global = list(one.sided=FALSE),
-         Pi.mat = NULL, error = "FDR.BH", alpha = NA, epsilon = 10^(-10), print.it=TRUE, ...){
+function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platform = NULL,
+         annotate = NULL, min.size = 2, max.size = Inf, by.gene = FALSE, local="default",
+         global = "default", args.local = NULL, args.global = list(one.sided=FALSE), Pi.mat = NULL,
+         error = "FDR.BH", parallel=FALSE, alpha = NA, epsilon = 10^(-10), print.it=TRUE, ...){
 
 ## X.mat: Object of class 'matrix'; expression estimates where
 ##        each row corresponds to a gene and each column to a sample.
@@ -24,6 +24,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
 ## Pi.mat: Either a 'matrix' permutations, or an integer of permutations to build.
 ## error: Character string of method to compute error rate estimates; the following are included in SAFE
 ##        "FDR.YB";"FWER.WY";"FWER.Bonf";"FDR.BH"; "none"
+## parallel: default = FALSE, set TRUE to run method in parallel with error = "none","FWER.Bonf", or "FDR.BH"
 ## alpha: Criterion for significance after adjusting for multiple comparison.
 ## epsilon: Minimum difference for ranking local and global statistics.
 ##    ...: Allows arguments from version 1.0 to be ignored
@@ -94,7 +95,6 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
   num.arrays<- ncol(X.mat)
 
 #### 1) Safe-express
-### UPDATED 6/20
   if(method=="express"){
     if(!local %in% c("default","Score"))
       cat("WARNING: Only Score statistics can be used in safe-express \n")
@@ -120,13 +120,11 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
     if(is.null(args.global$gamma.thresh)) gamma <- 0.01  else gamma <- args.global$gamma.thresh
     if(is.null(args.global$method.bivar)) mb <- "exact"  else mb    <- args.global$method.bivar
     if(is.null(args.global$swivel))       sw  <- 1e-4    else sw    <- args.global$swivel
-    if(is.null(args.global$parallel))     para  <- FALSE else para  <- args.global$parallel
-    if(is.null(args.global$num.cores))    ncor  <- 1     else ncor  <- args.global$num.cores
 
     express <- safe.express(X.mat = X.mat, y.vec = y.vec, C.list = C.list,
                             df.penalty = df.p, method = global, gamma.thresh = gamma,
                             method.bivar = mb, grid = grid, swivel = sw,
-                            parallel = para, num.cores=ncor)
+                            parallel = parallel)
 
     if(global=="D") {global.pval <- unlist(express$global.D[,2]); global.stat <- unlist(express$global.D[,1])}
     if(global=="V") {global.pval <- unlist(express$global.V[,2]); global.stat <- unlist(express$global.V[,1])}
@@ -217,30 +215,63 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
 
 
 #### 2) Permutation testing
-  if(method== "permutation"){
+  if(method == "permutation"){
     u.pvalue <- rep(1/num.perms, num.genes)
-    if(error == "none"){
+    if(error %in% c("none","FWER.Bonf","FDR.BH")){
       error.p  <- v.pval
       emp.p <- rep(1/num.perms,num.cats)
-      for(i in 2:num.perms){
-        u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
-        u.pvalue <- u.pvalue + (abs(u) >= (abs(u.obs) + epsilon)) / num.perms
-        v <- global.stat(u)
-        emp.p <- emp.p + (v>=(v.obs + epsilon))/num.perms
-        if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
+      if(parallel == FALSE){
+        for(i in 2:num.perms){
+          u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
+          u.pvalue <- u.pvalue + (abs(u) >= (abs(u.obs) + epsilon)) / num.perms
+          v <- global.stat(u)
+          emp.p <- emp.p + (v>=(v.obs + epsilon))/num.perms
+          if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
+        }
+      } else { # Parallel with error="none"
+        require(foreach)
+        require(doRNG)
+        if(print.it) cat(paste("Permutations split across", getDoParWorkers(), "cores\n"))
+        parallel.p <- foreach(i=2:num.perms, .combine="+", .inorder=FALSE)%dorng%{
+          u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
+          u.frac <- (abs(u) >= (abs(u.obs) + epsilon)) 
+          v <- global.stat(u)
+          emp.frac <- (v>=(v.obs + epsilon))
+          c(u.frac, emp.frac)
+        }
+        u.pvalue <- u.pvalue + parallel.p[1:length(u.obs)]/num.perms
+        emp.p <- emp.p + parallel.p[(length(u.obs)+1):(length(u.obs)+length(v.obs))]/num.perms
       }
+      if(error != "none"){ error.p <- get(paste("error",error,sep="."))(t(emp.p)) }
       if(is.na(alpha)) alpha <- 0.05
-     } else {
-      V.mat <- matrix(0,num.perms,num.cats)
-      V.mat[1,] <- v.obs
-      for(i in 2:num.perms){
-        u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
-        u.pvalue <- u.pvalue + (abs(u) >= (abs(u.obs) + epsilon)) / num.perms
-        V.mat[i,] <- global.stat(u)
-        if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
+    } else { # error not eq "none"
+      if(parallel == FALSE){
+        V.mat <- matrix(0,num.perms,num.cats)
+        V.mat[1,] <- v.obs
+        for(i in 2:num.perms){
+          u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
+          u.pvalue <- u.pvalue + (abs(u) >= (abs(u.obs) + epsilon)) / num.perms
+          V.mat[i,] <- global.stat(u)
+          if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
+        }
+      } else { # Parallel with error not eq "none","FWER.Bonf","FDR.BH"
+	stop("Parallel processing not supported for requested error type.",call.=FALSE)
+        #require(foreach)
+        #require(doRNG)
+        #if(print.it) cat(paste("Permutations split across", getDoParWorkers(), "cores\n"))
+        #v <- rep(0,(num.perms-1)*num.cats)
+        #parallel.p <- foreach(i=2:num.perms, .combine="+", .inorder=FALSE)%dorng%{
+        #  u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
+        #  u.frac <- (abs(u) >= (abs(u.obs) + epsilon)) 
+        #  v[((i-2)*num.cats+1):((i-1)*num.cats)] <- global.stat(u)
+        #  c(u.frac, v)
+        #}
+        #u.pvalue <- u.pvalue + parallel.p[1:length(u.obs)] / num.perms
+        #3v <- c(v.obs, tail(parallel.p, n= -length(u.obs)))
+        #V.mat <- matrix(v,num.perms,num.cats, byrow=TRUE)
       }
       P.mat <- (num.perms + 1 - apply(V.mat,2,rank,ties.method="min")) / num.perms
-      error.p <-get(paste("error",error,sep="."))(P.mat)
+      error.p <- get(paste("error",error,sep="."))(P.mat)
       emp.p <- P.mat[1,,drop=TRUE]
       if(is.na(alpha)) alpha <- 0.1
     }
@@ -257,8 +288,9 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
     if(global %in% c("Kolmogorov","Fisher"))
       stop(paste("global = \"", global,"\" cant be used in the bootstrap"),call.=FALSE)
     if(error %in% c("FWER.WY","FDR.YB")){
-      cat(paste("WARNING: error = \"",error,"\" not available in bootstrap\n",sep=""))
-      error="none"
+      stop("Bootstrap algorithm not supported for requested error type.",call.=FALSE)
+      #cat(paste("WARNING: error = \"",error,"\" not available in bootstrap\n",sep=""))
+      #error="none"
     }
 
     u.pvalue <-  rep(1/num.perms, num.genes)
@@ -273,16 +305,37 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation",
     } else null.global = 0
 
     v.sum <- v.obs ; v2.sum <- v.obs^2
+    if(parallel == FALSE){
+      for(i in 2:num.perms){
+        u <- local.stat(data = X.mat[,Pi.mat[i,]], vector = y.vec[Pi.mat[i,]], resample = Pi.mat[i,])
+        u.sum <- u + u.sum ; u2.sum <- u^2 + u2.sum
+        u.pvalue <- u.pvalue + (u*sign(u.obs) <= -epsilon)/num.perms
 
-    for(i in 2:num.perms){
-      u <- local.stat(data = X.mat[,Pi.mat[i,]], vector = y.vec[Pi.mat[i,]], resample = Pi.mat[i,])
-      u.sum <- u + u.sum ; u2.sum <- u^2 + u2.sum
-      u.pvalue <- u.pvalue + (u*sign(u.obs) <= -epsilon)/num.perms
-
-      v <- global.stat(u)
-      v.sum <- v + v.sum; v2.sum <- v^2 + v2.sum
-      emp.p <- emp.p + (v <= (null.global - epsilon))/num.perms
-      if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"bootstrap resamples completed\n"))
+        v <- global.stat(u)
+        v.sum <- v + v.sum; v2.sum <- v^2 + v2.sum
+        emp.p <- emp.p + (v <= (null.global - epsilon))/num.perms
+        if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"bootstrap resamples completed\n"))
+      }
+    } else { # Parallel 
+        require(foreach)
+        require(doRNG)
+        if(print.it) cat(paste("Bootstrap resamples split across", getDoParWorkers(), "cores\n"))
+        parallel.p <- foreach(i=2:num.perms, .combine="+", .inorder=FALSE)%dorng%{
+          u <- local.stat(data = X.mat[,Pi.mat[i,]], vector = y.vec[Pi.mat[i,]], resample = Pi.mat[i,])
+          u.frac <- (u*sign(u.obs) <= -epsilon)
+          v <- global.stat(u)
+          emp.frac <- (v <= (null.global - epsilon))
+          c(u, u^2, u.frac, v, v^2, emp.frac)
+        }
+        # Parse results
+        split.u <- length(u.obs)
+        split.v <- length(v.obs)
+        u.sum    <- u.sum + parallel.p[1:split.u]
+        u2.sum   <- u2.sum + parallel.p[(split.u+1) : (2*split.u)]
+        u.pvalue <- u.pvalue + parallel.p[(2*split.u+1) : (3*split.u)] /num.perms
+        v.sum  <- v.sum + parallel.p[(3*split.u+1) : (3*split.u+split.v)]
+        v2.sum <- v2.sum + parallel.p[(3*split.u+split.v+1) : (3*split.u+2*split.v)] 
+        emp.p  <- emp.p + parallel.p[(3*split.u+2*split.v+1) : (3*split.u+3*split.v)]/num.perms
     }
 
     if(method=="bootstrap" | method=="bootstrap.t"){

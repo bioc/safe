@@ -10,7 +10,7 @@ safe(X.mat, y.vec, C.mat = NULL, Z.mat = NULL,
      annotate = NULL, min.size = 2, max.size = Inf, 
      by.gene = FALSE, local = "default", global = "default", 
      args.local = NULL, args.global = list(one.sided = FALSE), 
-     Pi.mat = NULL, error = "FDR.BH", alpha = NA, 
+     Pi.mat = NULL, error = "FDR.BH", parallel=FALSE, alpha = NA, 
      epsilon = 10^(-10), print.it = TRUE, ...)
 }
 \arguments{
@@ -30,6 +30,7 @@ safe(X.mat, y.vec, C.mat = NULL, Z.mat = NULL,
   \item{args.global}{ An optional list to be passed to global statistics that require additional arguments. For two-sided local statistics, \code{args.global} = list(one.sided=F) allows bi-directional differential expression to be considered. }
   \item{Pi.mat}{ Either an integer, or a matrix or data.frame containing the permutations. See \code{getPImatrix} for the acceptable form of a matrix or data.frame. If \code{Pi.mat} is an integer, B, then \code{safe} will generate B resamples of \code{X.mat}. }
   \item{error}{ Specifies the method for computing error rate estimates. By default, Benjamini-Hochberg step down ("FDR.BH") FDR estimates are computed. A Bonferroni ("FWER.Bonf") and Holm's step-up ("FWER.Holm") adjustment can also be specified. Under permutation, "FDR.YB" computes the Yekutieli-Benjamini FDR estimate, and "FWER.WY" computes the Westfall-Young FWER estimate. The user can also specify "none" if no error rates are desired. }
+  \item{parallel}{ Logical argument (default = \code{FALSE}) specifying whether hypothesis test of \code{method} should be conducted with parallel processing. Only compatible with \code{error = "none", "FWER.Bonf",} or \code{FDR.BH}. See vignette for details.} 
   \item{alpha}{ The threshold for significant results to return. By default, alpha will be 0.05 for nominal p-values (\code{error} = "none" ), and 0.1 for adjusted p-values. }
   \item{epsilon}{ Numeric argument sets the minimum difference for ranking local and global statistics, correcting a numerical precision issue when computing empirical p-values in small data sets (n < 15). The default value is 10^(-10). }
   \item{print.it}{ Logical argument (default = \code{TRUE}) specifying whether to print progress updates to the log for permutation and bootstrap calculations. }
