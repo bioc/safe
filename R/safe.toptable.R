@@ -1,36 +1,38 @@
 safe.toptable <-
-function(safe, number=10, annotate = c("GO","KEGG","PFAM"),
-                            pretty=TRUE, description=TRUE){
+function(safe, number=10, pretty=TRUE, description=TRUE){
 ##  safe: Objects of class 'SAFE'
 ##  number: number of top categories to return
-##  annotate: Charcter vector of pathway annotation(s) for "GO" and "KEGG" categories
 ##  pretty: whether or not to call sigfigs() for rounding
 ##  description: whether or not to show Description column
   require(SparseM)
   if(description){
     names <- names(safe@global.stat)
     desc <- as.character(rep(NA,length(safe@global.stat)))
-    if("GO" %in% annotate){
-       require(GO.db)
-       keep <- substr(names,1,3) == "GO:"
-       if(sum(keep)) desc[keep] <- sapply(mget(names[keep],GOTERM),Term)
+    doGO <- substr(names,1,3) == "GO:"
+    if(sum(doGO)){
+      require(GO.db)
+      desc[doGO] <- sapply(mget(names[doGO],GOTERM),Term)
     }
-    if("KEGG" %in% annotate){
-       require(KEGG.db)
-       keep <- substr(names,1,5) == "KEGG:"
-       if(sum(keep)){
-         term <- substr(names[keep],6,10)
-         desc[keep] <- unlist(mget(term,KEGGPATHID2NAME))
-       }
+    doKEGG <- substr(names,1,5) == "KEGG:"
+    if(sum(doKEGG)){
+      require(KEGG.db)
+      terms <- substr(names[doKEGG],6,10)
+      desc[doKEGG] <- unlist(mget(terms,KEGGPATHID2NAME))
     }
-    if("PFAM" %in% annotate){
+    doPFAM <- substr(names,1,5) == "PFAM:"
+    if(sum(doPFAM)){
        require(PFAM.db)
-       keep <- substr(names,1,2) == "PF"
-       if(sum(keep)){
-         p.lists <- mget(names[keep],PFAMSCOP,ifnotfound=NA)
-         flatten <- function(c.list) paste(unlist(c.list), collapse = ", ")
-         desc <- unlist(lapply(p.lists, flatten))
-       }
+       terms <- gsub("PFAM:","PF",names[doPFAM])
+       p.lists <- mget(terms,PFAMSCOP,ifnotfound=NA)
+       flatten <- function(c.list) paste(unlist(c.list), collapse = ", ")
+       desc[doPFAM] <- unlist(lapply(p.lists, flatten))
+    }
+    doREACT <- substr(names,1,8) == "REACTOME"
+    if(sum(doREACT)){
+      require(reactome.db)
+      terms <- gsub("REACTOME:","",names[doREACT])
+      desc[doREACT] <- sapply(mget(terms,reactomePATHID2NAME),
+                          function(x) strsplit(x[1],": ")[[1]][2])
     }
     table <- data.frame(GenesetID = names(safe@global.stat),
                         Size = round((rep(1,length(safe@local.stat)) %*%

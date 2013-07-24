@@ -4,31 +4,34 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
          global = "default", args.local = NULL, args.global = list(one.sided=FALSE), Pi.mat = NULL,
          error = "FDR.BH", parallel=FALSE, alpha = NA, epsilon = 10^(-10), print.it=TRUE, ...){
 
-## X.mat: Object of class 'matrix'; expression estimates where
-##        each row corresponds to a gene and each column to a sample.
-## y.vec: Object of class 'numeric', 'integer' or 'character' with response.
-## Z.mat: Optional object of class 'matrix' each row corresponds to sample and each column a covariate
-## method: Character string of SAFE methodto use: "permutation","bootstrap.t", "bootstrap.q", or "express"
-## C.mat: Object of class 'matrix' or 'list' with gene category assignments.
+## X.mat:    Object of class 'matrix' with rows as genes and columns as samples.
+## y.vec:    Object of class 'numeric', 'integer' or 'character' with response.
+## Z.mat:    Optional object of class 'matrix' with rows as samples and columns as covariates
+## method:   Character string of SAFE method. Options include:
+##             "permutation","bootstrap.t", "bootstrap.q", or "express"
+## C.mat:    Object of class 'matrix' or 'list' with SparseM elements from getCmatrix().
 ## platform: A character string of a Bioconductor annotation package to build gene categories.
-## annotate: A character string to specify the set of categories to build.
+## annotate: A character string to specify the set of categories to build. Options include:
+##             "GO.BP","GO.CC","GO.MF","KEGG","PFAM", and "REACTOME"      
 ## min.size: Optional minimum category size to be built.
 ## max.size: Optional maximum category size to be built
 ## by.gene:  Logical as to whether multiple probesets to a single gene should be downweighted
-## local: Character string for the gene-specific statistic; following are included in SAFE
-##        "t.Student","t.Welch", "t.SAM", "f.ANOVA", "t.LM" and "z.COXPH"
-## global: Character string for the global statistic; the following are included in SAFE
-##         "Wilcoxon", "Fisher", "Pearson", "AveDiff")
-## args.local: An optional list to be passed to local statistics that require additional arguments.
+## local:    Character string for the gene-specific statistic; following are included in SAFE
+##             "t.Student","t.Welch", "t.SAM", "f.ANOVA", "t.LM" and "z.COXPH"
+## global:   Character string for the global statistic; the following are included in SAFE
+##             "Wilcoxon", "Fisher", "Pearson", "AveDiff"
+## args.local:  An optional list to be passed to local statistics that require additional arguments.
 ## args.global: An optional list to be passed to global statistics that require additional arguments.
-## Pi.mat: Either a 'matrix' permutations, or an integer of permutations to build.
-## error: Character string of method to compute error rate estimates; the following are included in SAFE
-##        "FDR.YB";"FWER.WY";"FWER.Bonf";"FDR.BH"; "none"
-## parallel: default = FALSE, set TRUE to run method in parallel with error = "none","FWER.Bonf", or "FDR.BH"
-## alpha: Criterion for significance after adjusting for multiple comparison.
-## epsilon: Minimum difference for ranking local and global statistics.
-##    ...: Allows arguments from version 1.0 to be ignored
+## Pi.mat:   Either a 'matrix' permutations, or an integer of permutations to build.
+## error:    Character string of method to compute error rate estimates; the following are included in SAFE
+##             "FDR.YB", "FWER.WY", "FWER.Bonf", "FDR.BH", and "none"
+## parallel: Logical with default = FALSE, set TRUE to run method in parallel.
+## alpha:    Criterion for significance after adjusting for multiple comparison.
+## epsilon:  Level of numerical precision to statistics; required to get accurate emp.p with small n.
+## ...:      Allows depreciated arguments from version 1.0 and 2.0 to be ignored
+  
   require(SparseM)
+
 #### 0) Set up objects
   if(!class(X.mat) %in% c("matrix","data.frame"))
       stop("SAFE v3.* nolonger supports exprSet and other S4 class objects.",call.=FALSE)
@@ -51,30 +54,47 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
     } else {
       require(platform,character.only=TRUE)
       platform <- sub("[.]db$","",platform)
-      probes <- names(as.list(get(paste(platform,"ACCNUM",sep=""))))
-      if (is.null(rownames(X.mat)) | (!prod(rownames(X.mat) %in% probes))) {
-        stop(paste("row labels of X.mat do not conform with ",platform,sep=""),call.=FALSE)}
+      probes <- rownames(X.mat)
+      genes <- get(paste(platform,"SYMBOL",sep=""))
+       if (is.null(probes) | (!prod(probes %in% names(as.list(genes))))){
+        stop(paste("Rownames of X.mat do not conform with ",platform,sep=""),call.=FALSE)
+      } else genes <- unlist(mget(probes,genes))
       if(substr(annotate[1],1,3)=="GO."){
-        cat(paste("Building ",annotate," categories from ",platform,"GO2ALLPROBES\n",sep=""))
+        cat(paste("Building categories from ",platform,"GO2ALLPROBES\n",sep=""))
         C.mat <- getCmatrix(keyword.list = as.list(get(paste(platform,"GO2ALLPROBES",sep=""))),
-                            present.genes = rownames(X.mat), min.size = min.size, by.gene = by.gene,
-                            max.size = max.size, GO.ont = substr(annotate,4,5))
+                            present.genes = probes, GO.ont = substr(annotate,4,5),
+                            min.size = min.size,max.size = max.size,
+                            by.gene = by.gene, gene.names = genes)
         C.names <- C.mat$col.names
         C.mat <- C.mat$C.mat.csr
       } else if(annotate=="KEGG"){
-        cat(paste("Building ",annotate," categories from ",platform,"PATH\n",sep=""))
+        cat(paste("Building categories from ",platform,"PATH\n",sep=""))
         C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PATH",sep=""))),
-                            present.genes = rownames(X.mat), min.size = min.size,
-                            max.size = max.size, by.gene = by.gene)
+                            present.genes = probes,
+                            min.size = min.size, max.size = max.size,
+                            by.gene = by.gene, gene.names = genes)
         C.names <- paste("KEGG:",C.mat$col.names,sep="")
         C.mat <- C.mat$C.mat.csr
       } else if(annotate=="PFAM"){
-        cat(paste("Building ",annotate," categories from ",platform,"PFAM\n",sep=""))
+        cat(paste("Building categories from ",platform,"PFAM\n",sep=""))
         C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PFAM",sep=""))),
-                            present.genes = rownames(X.mat), min.size = min.size,
-                            max.size = max.size, by.gene = by.gene)
+                            present.genes = probes,
+                            min.size = min.size, max.size = max.size,
+                            by.gene = by.gene, gene.names = genes)
         C.names <- paste("PFAM:",substr(C.mat$col.names,3,100),sep="")
         C.mat <- C.mat$C.mat.csr
+      } else if(annotate=="REACTOME"){
+        require(reactome.db)
+        cat(paste("Building categories from reactome.db by ENTREZID"))
+        entrez <- as.character(unlist(mget(probes,get(paste(platform,"ENTREZID",sep="")))))
+        entrez[is.na(entrez)] <- paste("NaN",1:sum(is.na(entrez)))
+        C.mat <- getCmatrix(gene.list = as.list(reactomeEXTID2PATHID),
+                            present.genes = entrez,
+                            min.size = min.size, max.size = max.size,
+                            by.gene = by.gene, gene.names = genes)
+        C.names <- paste("REACTOME:",C.mat$col.names,sep="")
+        C.mat <- C.mat$C.mat.csr
+
       } else stop(paste("Annotate = \"",annotate,"\" not recognized",sep=""),call.=FALSE)
    }
   } else if(class(C.mat)=="matrix"){
@@ -161,7 +181,8 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
   u.obs  <- local.stat(data = X.mat)
   u.pval <- as.numeric(rep(NA,num.genes))
 
-  if(!is.logical(args.global$one.sided)) stop("args.global$one.sided is missing or incorrect",call.=FALSE)
+  if(!is.logical(args.global$one.sided))
+    stop("args.global$one.sided is missing or incorrect",call.=FALSE)
   global.stat <- get(paste("global",global,sep="."))(C.mat,u.obs,args.global)
 
   v.obs  <- global.stat(u.obs)
@@ -228,7 +249,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
           emp.p <- emp.p + (v>=(v.obs + epsilon))/num.perms
           if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
         }
-      } else { # Parallel with error="none"
+      } else { # Parallel with error eq "none","FWER.Bonf","FDR.BH" 
         require(foreach)
         require(doRNG)
         if(print.it) cat(paste("Permutations split across", getDoParWorkers(), "cores\n"))
@@ -254,22 +275,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
           V.mat[i,] <- global.stat(u)
           if(print.it) if (trunc(i/100)==i/100) cat(paste(i,"permutations completed\n"))
         }
-      } else { # Parallel with error not eq "none","FWER.Bonf","FDR.BH"
-	stop("Parallel processing not supported for requested error type.",call.=FALSE)
-        #require(foreach)
-        #require(doRNG)
-        #if(print.it) cat(paste("Permutations split across", getDoParWorkers(), "cores\n"))
-        #v <- rep(0,(num.perms-1)*num.cats)
-        #parallel.p <- foreach(i=2:num.perms, .combine="+", .inorder=FALSE)%dorng%{
-        #  u <- local.stat(data = X.mat[,Pi.mat[i,]], resample = Pi.mat[i,])
-        #  u.frac <- (abs(u) >= (abs(u.obs) + epsilon)) 
-        #  v[((i-2)*num.cats+1):((i-1)*num.cats)] <- global.stat(u)
-        #  c(u.frac, v)
-        #}
-        #u.pvalue <- u.pvalue + parallel.p[1:length(u.obs)] / num.perms
-        #3v <- c(v.obs, tail(parallel.p, n= -length(u.obs)))
-        #V.mat <- matrix(v,num.perms,num.cats, byrow=TRUE)
-      }
+      } else stop(paste("error = \"", error,"\" can not be used with parallel = TRUE"),call.=FALSE)
       P.mat <- (num.perms + 1 - apply(V.mat,2,rank,ties.method="min")) / num.perms
       error.p <- get(paste("error",error,sep="."))(P.mat)
       emp.p <- P.mat[1,,drop=TRUE]
@@ -287,11 +293,8 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
       stop(paste("local = \"", local,"\" can not be used in the bootstrap"),call.=FALSE)
     if(global %in% c("Kolmogorov","Fisher"))
       stop(paste("global = \"", global,"\" cant be used in the bootstrap"),call.=FALSE)
-    if(error %in% c("FWER.WY","FDR.YB")){
-      stop("Bootstrap algorithm not supported for requested error type.",call.=FALSE)
-      #cat(paste("WARNING: error = \"",error,"\" not available in bootstrap\n",sep=""))
-      #error="none"
-    }
+    if(error %in% c("FWER.WY","FDR.YB"))
+      stop(paste("error = \"", error,"\" can not be used in the bootstrap"),call.=FALSE)
 
     u.pvalue <-  rep(1/num.perms, num.genes)
     u.sum <- u.obs ; u2.sum <- u.obs^2
