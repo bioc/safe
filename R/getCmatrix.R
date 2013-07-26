@@ -2,8 +2,7 @@ getCmatrix <-
 function (keyword.list = NULL, gene.list = NULL, 
           present.genes = NULL,  min.size = 2, max.size = Inf,
           by.gene = FALSE, gene.names =  NULL,
-          prune = FALSE, col.desc = NULL, source = NULL,
-          as.matrix = FALSE,GO.ont=NULL,...)
+          prune = FALSE, as.matrix = FALSE,GO.ont=NULL,...)
 {
 ##    ...: Allows arguments from versions 1.0 and 2.0 to be ignored
 ## keyword.list, gene.list: Objects of class 'list' containing category assigment by
@@ -122,8 +121,6 @@ cat(paste(length(C.names),"categories formed\n"))
     return(C.mat)
   } else {
     l <- list(C.mat.csr=C.matrix.csr, row.names = present.genes, col.names = C.names)
-    if(!is.null(col.desc)) l <- c(l,col.desc=list(col.desc))
-    if(!is.null(source)) l <- c(l,source=list(source))
     if(prune) l <- c(l,col.synonym=list(col.synonym))
     return(l)
   }

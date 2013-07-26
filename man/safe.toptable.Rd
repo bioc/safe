@@ -6,13 +6,11 @@
 }
 \usage{
 safe.toptable(safe, number = 10, 
-              annotate = c("GO","KEGG","PFAM"), 
               pretty = TRUE, description = TRUE)
 }
 \arguments{
   \item{safe}{ Object of class \code{SAFE}. }
   \item{number}{ Number of categories to be printed. If omitted, the first 10 categories are reported. }
-  \item{annotate}{ Character vector of pathway annotation(s) to be applied. By default, Gene Ontology (GO), Kyoto Encyclopedia of Genes and Genomes (KEGG) categories, and Protein Families (PFAM) are identifiable (\code{annotate = c("GO","KEGG","PFAM")}). }
   \item{pretty}{ Logical determining whether p-values smaller than 10^-4 are output in scientific notation, rather than as decimals. By default \code{pretty = TRUE}. }
   \item{description}{ Logical determining whether category descriptions are appended to printed output. By default \code{description = TRUE}. }
 }
