@@ -90,7 +90,6 @@ if(is.null(keyword.list)){
     keep <- (size >= min.size) & (size <= max.size)
     C.names <- C.names[keep]
     C.matrix.csr <- t(C.matrix.csr[keep])
-    if(!is.null(col.desc)) col.desc <- col.desc[keep]
 }
 cat(paste(length(C.names),"categories formed\n"))
 
@@ -105,7 +104,6 @@ cat(paste(length(C.names),"categories formed\n"))
      C.matrix.csr <- C.matrix.csr[,-drop]
      C.names.drop <- C.names[drop]
      C.names <- C.names[-drop]
-     if(!is.null(col.desc)) col.desc <- col.desc[-drop]
      
      col.synonym <- rep("",length(C.names))
      point <- match(string[drop],string[!drop])

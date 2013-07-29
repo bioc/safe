@@ -44,17 +44,19 @@
 \seealso{\code{\link{safe}}, \code{\link{safeplot}}, 
   \code{\link{getPImatrix}}.}
 \examples{
-require(hgu133a.db)
-genes <- unlist(as.list(hgu133aSYMBOL))
-RS.list <- list(Genes21 = c("ACTB","RPLP0","MYBL2","BIRC5","BAG1",
+if(interactive()){
+ require(hgu133a.db)
+ genes <- unlist(as.list(hgu133aSYMBOL))
+ RS.list <- list(Genes21 = c("ACTB","RPLP0","MYBL2","BIRC5","BAG1",
                              "GUSB","CD68","BCL2","MMP11","AURKA",
                              "GSTM1","ESR1","TFRC","PGR","CTSL2",
                              "GRB7","ERBB2","MKI67","GAPDH","CCNB1",
                              "SCUBE2"),
-                Genes16 = c("MYBL2","BIRC5","BAG1","CD68","BCL2",
-                            "MMP11","AURKA","GSTM1","ESR1","PGR","CTSL2",
-                            "GRB7","ERBB2","MKI67","CCNB1","SCUBE2"))
-RS.list <- lapply(RS.list,function(x) return(names(genes[which( match(genes, x, nomatch = 0) > 0)])))
-C. <- getCmatrix(keyword.list = RS.list)
+                 Genes16 = c("MYBL2","BIRC5","BAG1","CD68","BCL2",
+                             "MMP11","AURKA","GSTM1","ESR1","PGR","CTSL2",
+                             "GRB7","ERBB2","MKI67","CCNB1","SCUBE2"))
+ RS.list <- lapply(RS.list,function(x) return(names(genes[which( match(genes, x, nomatch = 0) > 0)])))
+ C1 <- getCmatrix(keyword.list = RS.list)
+}
 }
 \keyword{ htest }
