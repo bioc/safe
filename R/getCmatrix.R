@@ -15,7 +15,7 @@ function (keyword.list = NULL, gene.list = NULL,
 ## prune:              Logical to remove redundant categories
 ## as.matrix:          Logical to return as class 'matrix' instead of 'SparseM'
 
-require(SparseM)
+# require(SparseM)
 
 #### 0) check for errors
   if((is.null(keyword.list) + is.null(gene.list))!=1)

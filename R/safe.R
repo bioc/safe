@@ -30,7 +30,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
 ## epsilon:  Level of numerical precision to statistics; required to get accurate emp.p with small n.
 ## ...:      Allows depreciated arguments from version 1.0 and 2.0 to be ignored
   
-  require(SparseM)
+#  require(SparseM)
 
 #### 0) Set up objects
   if(!class(X.mat) %in% c("matrix","data.frame"))
