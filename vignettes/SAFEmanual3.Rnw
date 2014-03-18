@@ -23,7 +23,7 @@
 
 \section{Introduction}
 \label{sec:intro}
-This vignette demonstrates the utility and flexibility of the R package \texttt{safe} in conducting tests of functional categories for gene expression studies. Significance Analysis of Function and Expression (SAFE) is a resampling-based method that is applicable to many different experimental designs and functional categories. SAFE extends and builds on an approach first employed in Virtaneva {\em et al.} (2001), and defined more rigorously in Barry {\em et al.} (2005 and 2008). More recently, it was demonstrated in Gatti {\em et al.} (2010) that many applications for pathway analysis continue to utilize methods which are grossly anti-conservative, and would therefore lead to a very high false-positive rate in the literature. Lastly, in Zhou {\em et al.} (under review), we developed a series of novel analytical approximations of permutation-based tests of pathways, which have improved properties over the use of random sampling in selecting permutations, and greatly reduce the computational requirements when inferences are based on the extreme tails of empirical distributions. It is suggested that users refer to these publications to understand the SAFE terminology and principles in greater detail.
+This vignette demonstrates the utility and flexibility of the R package \texttt{safe} in conducting tests of functional categories for gene expression studies. Significance Analysis of Function and Expression (SAFE) is a resampling-based method that is applicable to many different experimental designs and functional categories. SAFE extends and builds on an approach first employed in Virtaneva {\em et al.} (2001), and defined more rigorously in Barry {\em et al.} (2005 and 2008). Gatti {\em et al.} (2010) showed that many applications for pathway analysis continue to utilize methods which are grossly anti-conservative, and would therefore lead to a very high false-positive rate in the literature. Lastly, in Zhou {\em et al.} (2013), we developed a series of novel analytical approximations of permutation-based tests of pathways. These have improved properties over the use of random sampling in selecting permutations, and greatly reduce the computational requirements when inferences are based on the extreme tails of empirical distributions. It is suggested that users refer to these publications to understand the SAFE terminology and principles in greater detail.
 
 \section{Citing \texttt{safe}}
 When using the results from the \texttt{safe} package, please cite:
@@ -37,23 +37,24 @@ Barry,  W.T., Nobel, A.B. and Wright, F.A. (2008) `A Statistical Framework for T
 The above articles describe the methodological framework behind the \texttt{safe} package.
 
 
-\section{Updates in version 3.0}
+\section{Updates since version 2}
 \label{sec:changes}
-The following lists summarize the changes and extended capability of \texttt{safe} that are included in version 3.0. Examples of their implementation are illustrated in subsequent sections, and additional details are given in help documents.
+The following lists summarize the changes and extended capability of \texttt{safe} that are included in version 3. Examples of their implementation are illustrated in subsequent sections, and additional details are given in help documents.
 
 \subsection{Major extensions}
 \begin{itemize}
-\item A new method for including covariates in \texttt{safe} is implemented with the option argument \texttt{Z.mat}, and relies on the internal function \texttt{getXYresiduals}. The extension is discussed in Zhou {\em et al.} (under review), and an example is given in subsection \ref{sec:getXY}.
+\item A new method for including covariates in \texttt{safe} is implemented with the option argument \texttt{Z.mat}, and relies on the internal function \texttt{getXYresiduals}. The extension is discussed in Zhou {\em et al.} (2013), and an example is given in subsection \ref{sec:getXY}.
 
-\item A new approach for pathway-analyses with right-censored time-to-event data is also discussed in Zhou {\em et al.} (under review), and an example is given in subsection \ref{sec:surv}. The computationally intensive method included in version 2.0 (\texttt{local = "z.COXPH"}) is depreciated and has been removed.
-
-\item \texttt{safe} is modified to include the novel analytic approximations to permutation-testing proposed in Zhou {\em et al.} (under review) using a dependent package, \texttt{safeExpress}. Users interested in this method should contact any of the co-authors for the package source, which can be installed on any operating system.
-
-\item New functionality is added to \texttt{safe} to implement parallel processing. Usage instructions and examples of improved execution times are given in section \ref{sec:parallel}.
+\item A new approach for pathway-analyses with right-censored time-to-event data is also discussed in Zhou {\em et al.} (2013), and an example is given in subsection \ref{sec:surv}. The computationally intensive method included in version 2 (\texttt{local = "z.COXPH"}) is depreciated and has been removed.
 
 \item The internal function \texttt{getCmatrix} is updated for improved efficiency and a new optional argument, \texttt{by.gene = TRUE}, to consider pathways at the gene-level instead of the probeset-level.
 
+\item New functionality is added to \texttt{safe} to implement parallel processing. Usage instructions and examples of improved execution times are given in section \ref{sec:parallel}.
+
 \item For basic experimental designs, \texttt{safe} automatically switches to exhaustive permutation when there are fewer than what is specified by the default or user. The default for \texttt{method = "permutation"} remains \texttt{Pi.mat = 1000}.
+
+\item \texttt{safe} is modified to include the novel analytic approximations to permutation-testing proposed in Zhou {\em et al.} (2013) using a dependent package, \texttt{safeExpress}. Users interested in this method should contact any of the co-authors for the package source, which can be installed on any operating system.
+
 \end{itemize}
 
 \subsection{Minor changes}
@@ -129,7 +130,7 @@ safe.toptable(results, number = 10)
 @
 \end{scriptsize}
 
-NOTE: As in standard feature-by-feature analyses, it is of critical importance to account for multiple comparisons when considering a number of categories simultaneously. By default, \texttt{safe} provides Benjamini-Hochberg (1995) adjusted p-values to control for the false-discovery rate. Several other options for correcting for multiple testing are discussed in detail in Section \ref{sec:mult}.
+NOTE: As in standard feature-by-feature analyses, it is of critical importance to account for multiple comparisons when considering a number of categories simultaneously. By default, \texttt{safe} provides Benjamini-Hochberg (1995) adjusted p-values to control the false-discovery rate. Several other options for correcting for multiple testing are discussed in detail in Section \ref{sec:mult}.
 
 Feature-specific results within a category can be extracted by the \texttt{gene.results} function. This is useful for investigators interested in knowing which members of a category are contributing to its significance. The following example demonstrates how the direction and magnitude of differential expression are displayed by default. A list of two \texttt{data.frames} can also be returned with the argument \texttt{print.it = FALSE}.
 
@@ -149,7 +150,7 @@ safeplot(results, cat.name = "KEGG:00072", gene.names = genes)
 
 \section{Building categories from annotation packages}
 \label{sec:cats}
-For the example in section \ref{sec:imp}, KEGG categories were formed internally in \texttt{safe} as any term which is annotated to at least two Affymetrix probesets in the filtered dataset (identified by the rownames of \texttt{e3.upp}). Categories can also be created externally from \texttt{safe}, and stored efficiently as a sparse matrix using the \texttt{SparseM} package as follows: 
+For the example in section \ref{sec:imp}, KEGG categories were built internally in \texttt{safe} as any term which is annotated to at least two Affymetrix probesets in the filtered dataset (identified by the rownames of \texttt{e3.upp}). Categories can also be created externally from \texttt{safe}, and stored efficiently as a sparse matrix using the \texttt{SparseM} package as follows: 
 
 <<>>=
 C.mat <- getCmatrix(gene.list = as.list(hgu133aPATH), 
@@ -170,9 +171,8 @@ Gene Ontology pathways can also be created from Bioconductor metadata packages. 
 
 <<>>=
 GO.list <- as.list(hgu133aGO2ALLPROBES)
-C.mat.CC <- getCmatrix(keyword.list = GO.list, GO.ont = "CC", 
-            present.genes = rownames(e3.upp), min.size = 10,
-            max.size = 200)
+C.mat2 <- getCmatrix(keyword.list = GO.list, GO.ont = "CC", 
+            present.genes = rownames(e3.upp))
 @
 
 Statistical methods for pathway-analyses are generally applicable to any other biological reason for creating a gene-set, but are normally underutilized because of the bioinformatic challenge of creating, storing, and implementing sets. With \texttt{safe}, the function \texttt{getCmatrix} gives a user the capability, albeit in a somewhat limited fashion, of storing user-defined gene-sets in an ordered manner for analyses. For example, the genes that are measured by the Oncotype DX recurrence score for breast cancer (either all 21 genes, or the 16 non-housekeeper genes), can be tested as a set as:
@@ -199,15 +199,18 @@ Lastly, with version 3.0 of \texttt{safe}, a new definition of ``soft categories
 
 \section{Experimental designs and local statistics}
 \label{sec:local}
-The two-sample comparison of p$53$ mutant versus p$53$ wild type samples is one of several experimental designs that \texttt{safe} can automatically accommodate. This section describes the variety of designs, and the corresponding local statistics, along with the arguments in \texttt{safe} to execute them. NOTE: To decrease computation time in some of the following examples, permutation testing is bypassed using the argument \texttt{Pi.mat = 1}.
+The two-sample comparison of p$53$ mutant versus p$53$ wild type samples is one of several experimental designs that \texttt{safe} can automatically accommodate. This section describes the variety of designs, and the corresponding local statistics, along with the arguments in \texttt{safe} to execute them. NOTE: To decrease computation time in the following examples, permutation testing is bypassed using the argument \texttt{Pi.mat = 1}.
 
 \subsection{Two-sample comparisons}
-For two-sample comparisons, the response vector can either be given as a $(0,1)$ vector, or a character vector with two unique elements. When a character vector is passed to \texttt{safe} as the response, the assignment of the first element of the array becomes Group 1, and is printed as a warning in the output from \texttt{gene.results} and \texttt{safeplot}. It is critical for the user to be aware of this assignment and how it defines the direction of differential expression. By default, a Student's t-statistic is employed for categorical comparisons, but if unequal variances are assumed, the Welch t-statistic can be selected using \texttt{local = "t.Welch"}. As shown below, feature-by-feature results are highly correlated between the two statistics, as expected.
+For two-sample comparisons, the response vector can either be given as a $(0,1)$ vector or a character vector with two unique elements. When a character vector is passed to \texttt{safe} as the response, the assignment of the first element of the array becomes Group 1, and is printed as a warning in the output from \texttt{gene.results} and \texttt{safeplot}. It is critical for the user to be aware of this assignment and how it defines the direction of differential expression. 
+
+By default, a Student's t-statistic is employed for categorical comparisons, but if unequal variances are assumed, the Welch t-statistic can be selected using \texttt{local = "t.Welch"}. As shown below, feature-by-feature results are highly correlated between the two statistics, as expected.
 
 <<>>=
 results2 <- safe(e3.upp, p3.upp$p53, C.mat, local = "t.Welch",
                  Pi.mat = 1, print.it = FALSE)
-cor(results2@local.stat, results@local.stat)
+cbind(Student = round(results@local.stat[1:3], 3),
+      Welch   = round(results2@local.stat[1:3], 3))
 @
 
 \subsection{Multi-class designs}
@@ -217,16 +220,16 @@ For multi-class designs, response vectors should be character or numeric vectors
 y.vec <- c("p53-/er-","p53-/er+","p53+/er-",
            "p53+/er+")[1+p3.upp$er+2*p3.upp$p53]
 table(PHENO = y.vec)
-results2 <- safe(e3.upp, y.vec, C.mat, print.it = FALSE)
-safe.toptable(results2, number = 10, description = FALSE)
+results2 <- safe(e3.upp, y.vec, C.mat, local = "f.ANOVA", 
+                 Pi.mat = 1, print.it = FALSE)
 @
 
 \subsection{Continuous phenotypes}
 The example below demonstrates how \texttt{safe} can also be used to examine continuous responses, such as tumor size for the breast cancer data set. Simple linear regression is performed if a numeric vector with more than two unique values is supplied, or by using the argument \texttt{local = "t.LM"}.
 
 <<>>=
-results2 <- safe(e3.upp, p3.upp$size, C.mat, print.it = FALSE)
-safe.toptable(results2, number = 10, description = FALSE)
+results2 <- safe(e3.upp, p3.upp$size, C.mat, local = "t.LM", 
+                 Pi.mat = 1, print.it = FALSE)
 @
 
 \subsection{Paired two-sample comparisons}
@@ -257,7 +260,7 @@ return(function(data, vector = y.vec, ...) {
 <<>>=
 results3 <-  safe(e3.upp, y.vec, C.mat, local = "WilcoxSignRank",
                   Pi.mat = 1, print.it = FALSE)
-cbind(Student = round(results2@local.stat[1:3], 3),
+cbind(Paired.t  = round(results2@local.stat[1:3], 3),
       Sign.Rank = results3@local.stat[1:3])
 @
 
@@ -283,21 +286,19 @@ drop <- is.na(p3.upp$t.rfs)
 Xy <- getCOXresiduals(e3.upp[,!drop], p3.upp$t.rfs[!drop], 
                       p3.upp$e.rfs[!drop])
 results2 <- safe(Xy$X.star, Xy$y.star, C.mat, 
-                 print.it = FALSE)  
-safe.toptable(results2, number = 10, description = FALSE)
+                 Pi.mat = 1, print.it = FALSE)  
 @
 
 
 \subsection{New method for covariate adjustment}
 \label{sec:getXY}
-Finally, another important extension of the SAFE method allows for resampling-based pathway analysis to be applied to experimental designs with important covariate information (noted here as an $n \times p$ matrix). In principle, defining local statistics in the presence of covariates that can be applied to every array feature is straightforward. However, we still need to handle correlation structures across genes, for which permutation is attractive. The proper handling of covariates is a challenge in the permutation setting, however, as standard permutation forces the investigator to permute the covariates relative to either $X$ or $y$, but is  inappropriate if a covariate is correlated with both $X$ and $y$. Several permutation approaches in the presence of covariates are described in Good (2000) for linear regression, but are not computationally efficient for high-dimensional datasets. Rather, we propose computing the residuals $X_z$ and $y_z$ from general or generalized linear regression models for the $n \times p$ covariate matrix $Z$. Then, the score statistic defined in Zhou {\em et al.} (under review) can be used as the local statistic in resampling-based tests, or in the analytical approximations using a penalty for the loss of degrees of freedom from adjusting for $Z$. The following code illustrates how this approach can be applied to the Grade 3 subset of the breast cancer dataset to test for the association of pathways to estrogen receptor status after adjusting for p$53$ mutations.
+Finally, another important extension of the SAFE method allows for resampling-based pathway analysis to be applied to experimental designs with important covariate information (noted here as an $n \times p$ matrix). In principle, defining local statistics in the presence of covariates that can be applied to every array feature is straightforward. However, we still need to handle correlation structures across genes, for which permutation is attractive. The proper handling of covariates is a challenge in the permutation setting, however, as standard permutation forces the investigator to permute the covariates relative to either $X$ or $y$, but is  inappropriate if a covariate is correlated with both $X$ and $y$. Several permutation approaches in the presence of covariates are described in Good (2000) for linear regression, but are not computationally efficient for high-dimensional datasets. Rather, we propose computing the residuals $X_z$ and $y_z$ from general or generalized linear regression models for the $n \times p$ covariate matrix $Z$. Then, the score statistic defined in Zhou {\em et al.} (2013) can be used as the local statistic in resampling-based tests, or in the analytical approximations using a penalty for the loss of degrees of freedom from adjusting for $Z$. The following code illustrates how this approach can be applied to the Grade 3 subset of the breast cancer dataset to test for the association of pathways to p$53$ mutations after adjusting for estrogen receptor status.
 
 <<>>=
 table(ER = p3.upp$er, p53 = p3.upp$p53)
-Xy <- getXYresiduals(e3.upp, p3.upp$er, Z.mat = p3.upp$p53)
+Xy <- getXYresiduals(e3.upp, p3.upp$p53, Z.mat = p3.upp$er)
 results2 <- safe(Xy$X.star, Xy$y.star, C.mat, 
-                 print.it = FALSE)
-safe.toptable(results2, number = 10, description = FALSE)
+                 Pi.mat = 1, print.it = FALSE)
 @
 
 
@@ -327,15 +328,9 @@ One popular approach to examining categories is through ``gene-list enrichment''
 set.seed(12345)
 results2 <- safe(e3.upp, p3.upp$p53, C.mat, global = "Fisher",
                  args.global = list(one.sided=F, genelist.length = 200),
-                 print.it = FALSE)
-safe.toptable(results2, number = 10, description = FALSE)
+                 Pi.mat = 1, print.it = FALSE)
 @
 
-The following calculation demonstrates the biased p-value one gets from a naive application of Fisher's Exact test to KEGG:04972.
-
-<<>>=
-1-phyper(6-1, 164, 22215-164, 200)
-@
 
 Similarly, the Pearson test for difference in proportions (which is equivalent to a Chi-squared test) can be specified by the argument \texttt{global = "Pearson"}, and instead of conditioning on the number of rejected feature-level hypotheses, as in Fisher Exact tests, one specifies the cutoff for the gene-list. This is done in the same manners as shown above, where a one-sided or two-sided threshold value for local statistics is declared by the argument \texttt{args.global = list(one.sided = FALSE, genelist.cutoff = 2.0)}.
 
@@ -361,12 +356,9 @@ The following example is an anecdotal illustration of increased power from boots
 <<>>=
 set.seed(12345)
 results2 <- safe(e3.upp, p3.upp$er, C.mat2, 
-                 method = "bootstrap.q", print.it = FALSE)
-results3 <- safe(e3.upp, p3.upp$er, C.mat2, 
                  method = "bootstrap.t", print.it = FALSE)
 round(cbind(Perm = results1@global.pval,
-            Boot.q = results2@global.pval,
-            Boot.t = results3@global.pval),4)
+            Boot.t = results2@global.pval),4)
 @
 
 Based on the requirements for bootstrap-based hypothesis testing (see Barry {\em et al.}, 2008), they can only be performed using 1) Wilcoxon rank sum, 2) average difference, or 3) Pearson difference in proportions (the pre-defined global statistics).
@@ -375,7 +367,7 @@ P-values for local statistics are calculated under bootstrap resampling, using e
 
 By default, the data are resampled $B = 1000$ times when performing permutation or quantile bootstrap tests. However, with minimum empirical p-values of $\frac{1}{B}$, this may not be sufficient when testing hundreds or thousands of categories, and $\geq 10$-fold more resamples could be needed if there are several hundred categories being investigated. The Gaussian bootstrap-based test has the advantage that empirical p-values are not bounded by the total number of resamples taken, such that small p-values can be obtained without intensive computational effort.
 
-Moreover, because permutation-resampling is intensive in computation time and memory requirements, we have recently developed accurate analytic approximations to permutations of score statistics that have good performance for even relatively small sample sizes (Zhou {\em et al.}, under review). This approach preserves the essence of controlling Type I error by permutation pathway analysis, but with greatly reduced computation, and is more accurate than competing moment-based approaches in common use. The method has improved properties, in terms of mean square error, over the common use of random sampling to select permutations. These algorithms have been written into a new R package, \texttt{safeExpress}, which can be called internally by \texttt{safe} using the argument \texttt{method = express}, so that the output is provided as a {\em SAFE} object. The \texttt{safeExpress} package is available by request to any of the vignette coauthors.
+Moreover, because permutation-resampling is intensive in computation time and memory requirements, we have recently developed accurate analytic approximations to permutations of score statistics that have good performance for even relatively small sample sizes (Zhou {\em et al.}, 2013). This approach preserves the essence of controlling Type I error by permutation pathway analysis, but with greatly reduced computation, and is more accurate than competing moment-based approaches in common use. The method has improved properties, in terms of mean square error, over the common use of random sampling to select permutations. These algorithms have been written into a new R package, \texttt{safeExpress}, which can be called internally by \texttt{safe} using the argument \texttt{method = express}, so that the output is provided as a {\em SAFE} object. The \texttt{safeExpress} package is available by request to any of the vignette coauthors.
 
 
 \section{Parallel processing}
@@ -498,8 +490,7 @@ expression data', {\em Bioinformatics}, {\bf 21} (9), 1950--1957.
 
 \item Yekutieli, D. and Benjamini, Y. (1999) `Resampling-based false discovery rate controlling multiple test procedures for correlated test statistics', {\em J Statist Plann Inference}, {\bf 82}, 171--196.
 
-\item Zhou, Y.H., Barry, W.T., and Wright, F.A. (2012) `Empirical Pathway Analysis, without Permutation', {\em under review}. 
-\\\verb+http://biostats.bepress.com/uncbiostat/art24+
+\item Zhou, Y.H., Barry, W.T., and Wright, F.A. (2012) `Empirical Pathway Analysis, without Permutation', {\em Biostatistics}, {\bf 14}(3):573--85. 
 \end{itemize}
 
 \end{document}

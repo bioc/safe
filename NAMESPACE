@@ -1,2 +1,12 @@
 exportPattern("^[[:alpha:]]+")
-import(AnnotationDbi, Biobase, methods, SparseM)
+importClassesFrom(methods, character, numeric)
+importClassesFrom(SparseM, matrix.csr)
+import(AnnotationDbi)
+import(Biobase)
+importMethodsFrom(methods, show)
+importMethodsFrom(SparseM, as.matrix, as.matrix.csr, diag, diff, solve,
+                  t)
+importFrom(graphics, axis, box, layout, lines, par, plot, points,
+           polygon, text)
+importFrom(methods, new)
+importFrom(stats, approx, binomial, glm, lm, pchisq, pt, var)

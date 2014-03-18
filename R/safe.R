@@ -56,7 +56,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
       platform <- sub("[.]db$","",platform)
       probes <- rownames(X.mat)
       genes <- get(paste(platform,"SYMBOL",sep=""))
-       if (is.null(probes) | (!prod(probes %in% names(as.list(genes))))){
+      if (is.null(probes) | (!prod(probes %in% names(as.list(genes))))){
         stop(paste("Rownames of X.mat do not conform with ",platform,sep=""),call.=FALSE)
       } else genes <- unlist(mget(probes,genes))
       if(substr(annotate[1],1,3)=="GO."){
