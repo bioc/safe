@@ -109,17 +109,19 @@ e3.upp <- ex.upp[match(names(genes), rownames(ex.upp)),
 table(p53 = p3.upp$p53)
 @
 
-Probeset IDs are necessary as row names in \texttt{e3.upp} for building gene categories. Here, the functional categories of interest are KEGG pathways. The KEGG categories are identified internally by the \texttt{safe} function; the process of generating categories is discussed in more detail in section \ref{sec:cats}.
+Probeset IDs are necessary as row names in \texttt{e3.upp} for building gene categories. Here, the functional categories of interest are REACTOME pathways
+and are identified internally by the \texttt{safe} function; the process of generating categories is discussed in more detail in section \ref{sec:cats}.
 
 <<>>=
 set.seed(12345)
 results <- safe(e3.upp, p3.upp$p53, platform = "hgu133a.db",
-                annotate = "KEGG", print.it = FALSE)
+                annotate = "REACTOME", print.it = FALSE)
 @
 
 The SAFE framework for testing gene categories is a two-stage process, where ``local'' statistics assess the association between expression and the response of interest in a feature-by-feature manner, and a ``global'' statistic measures the extent of association in features assigned to a category relative to the complement. The default local statistic for the two-sample comparison of p$53+$ and p$53-$ is the Student's t-statistic, and the default global statistic is the Wilcoxon rank sum. Empirical p-values for local and global statistics are calculated by permutation.
 
-The basic output from \texttt{safe} is an object of class {\em SAFE}. Showing objects of class {\em SAFE} will print details on the type of analysis and the categories that attain a certain level of significance. In addition, the function \texttt{safe.toptable} is included in version 3.0 of the \texttt{safe} package to return annotated results as a \texttt{data.frame} for categories with the strongest association to response/phenotype. This includes (a) category name; (b) the category size; (c) the global statistic; (d) nominal empirical p-values; (e) adjusted p-values; and (f) descriptions of Gene Ontology (GO), Kyoto Encyclopedia of Genes and Genomes (KEGG) categories, or Protein Families (PFAM), if available.
+The basic output from \texttt{safe} is an object of class {\em SAFE}. Showing objects of class {\em SAFE} will print details on the type of analysis and the categories that attain a certain level of significance. In addition, the function \texttt{safe.toptable} is included in version 3.0 of the \texttt{safe} package to return annotated results as a \texttt{data.frame} for categories with the strongest association to response/phenotype. This includes (a) category name; (b) the category size; (c) the global statistic; (d) nominal empirical p-values; (e) adjusted p-values; and (f) descriptions of Gene Ontology (GO), REACTOME
+genesets, or Protein Families (PFAM), if available.
 
 <<eval=FALSE>>=
 safe.toptable(results, number = 10)
@@ -135,13 +137,13 @@ NOTE: As in standard feature-by-feature analyses, it is of critical importance t
 Feature-specific results within a category can be extracted by the \texttt{gene.results} function. This is useful for investigators interested in knowing which members of a category are contributing to its significance. The following example demonstrates how the direction and magnitude of differential expression are displayed by default. A list of two \texttt{data.frames} can also be returned with the argument \texttt{print.it = FALSE}.
 
 <<>>=
-gene.results(results, cat.name = "KEGG:00072", gene.names = genes)
+gene.results(results, cat.name = "REACTOME:69183", gene.names = genes)
 @
 
 A summary of gene-specific results for a category is also available from the \texttt{safeplot} function. The process of generating SAFE-plots and a more detailed description of the image are given in section \ref{sec:plots}.
 
 <<plot0, results=hide, fig=T, include=F>>=
-safeplot(results, cat.name = "KEGG:00072", gene.names = genes)
+safeplot(results, cat.name = "REACTOME:69183", gene.names = genes)
 @
 \begin{center}
 \includegraphics[viewport=30 90 400 310]{SAFEmanual3-plot0}
@@ -150,12 +152,14 @@ safeplot(results, cat.name = "KEGG:00072", gene.names = genes)
 
 \section{Building categories from annotation packages}
 \label{sec:cats}
-For the example in section \ref{sec:imp}, KEGG categories were built internally in \texttt{safe} as any term which is annotated to at least two Affymetrix probesets in the filtered dataset (identified by the rownames of \texttt{e3.upp}). Categories can also be created externally from \texttt{safe}, and stored efficiently as a sparse matrix using the \texttt{SparseM} package as follows: 
+For the example in section \ref{sec:imp}, REACTOME categories were built internally in \texttt{safe} as any term which is annotated to at least two Affymetrix probesets in the filtered dataset (identified by the rownames of \texttt{e3.upp}). Categories can also be created externally from \texttt{safe}, and stored efficiently as a sparse matrix using the \texttt{SparseM} package as follows: 
 
 <<>>=
-C.mat <- getCmatrix(gene.list = as.list(hgu133aPATH), 
-                    present.genes = rownames(e3.upp))
-C.mat$col.names <- paste("KEGG:", C.mat$col.names, sep = "")
+entrez <- unlist(mget(names(genes),hgu133aENTREZID))
+C.mat <- getCmatrix(gene.list = as.list(reactomeEXTID2PATHID),
+                    present.genes = entrez,prefix = "REACTOME:",
+                    min.size = 10, max.size = 500)
+results <- safe(e3.upp, p3.upp$p53, C.mat, print.it = FALSE)
 @
 
 NOTE: For many instances, when performing pathway-analyses in R, it will improve computational time to create sparse matrices of categories first, and then apply them (or appropriately subsetted objects) to runs of safe with varying expression datasets or response vectors. For instance, we will do so in section \ref{sec:local} to illustrate the different experimental designs that \texttt{safe} can accommodate.
@@ -384,7 +388,7 @@ registerDoParallel(cores=4)
 
 set.seed(12345)
 results <- safe(e3.upp, p3.upp$p53, platform = "hgu133a.db",
-                annotate = "KEGG", print.it = FALSE, parallel=TRUE)
+                annotate = "REACTOME", print.it = FALSE, parallel=TRUE)
 @ 
 
 \subsection{Comparison of methods}
@@ -426,7 +430,7 @@ Because computational overhead is minimal outside of the resampling loop, execut
 Ever since permutation testing for pathway-analysis was used in Virtaneva {\em et al.} (2001), we have advocated that the cumulative distribution function (CDF) of the category be used to visualize the relative magnitude and direction of differential expression of array features annotated to the category. By default, the function \texttt{safeplot} will create a figure for the most significant pathway, as shown in section \ref{sec:imp}. SAFE-plots of other categories can be generated with the argument \texttt{cat.name}.
 
 <<plot2, results=hide, fig=T, include=F>>=
-safeplot(results, cat.name = "KEGG:03030", gene.names = genes)
+safeplot(results, cat.name = "REACTOME:140877", gene.names = genes)
 @
 \begin{center}
 \includegraphics[viewport=30 90 400 320]{SAFEmanual3-plot2}

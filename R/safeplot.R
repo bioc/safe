@@ -23,9 +23,9 @@ function(safe = NULL, cat.name = "", limits = NULL,
    if(is.null(limits)) limits <- range(local.stats)
    if(is.null(gene.names)) gene.names <- names(local.stats)
    if(is.null(cat.desc)){
-       if(substr(cat.name,1,5) == "KEGG:") {
-           require(KEGG.db); cat.desc <-
-             mget(substr(cat.name,6,10),KEGGPATHID2NAME)[[1]]}
+#       if(substr(cat.name,1,5) == "KEGG:") {
+#           require(KEGG.db); cat.desc <-
+#             mget(substr(cat.name,6,10),KEGGPATHID2NAME)[[1]]}
        if(substr(cat.name,1,3) == "GO:") {
            require(GO.db); cat.desc <-
              Term(mget(cat.name,GOTERM)[[1]])}

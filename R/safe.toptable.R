@@ -13,12 +13,12 @@ function(safe, number=10, pretty=TRUE, description=TRUE){
       require(GO.db)
       desc[doGO] <- sapply(mget(names[doGO],GOTERM),Term)
     }
-    doKEGG <- substr(names,1,5) == "KEGG:"
-    if(sum(doKEGG)){
-      require(KEGG.db)
-      terms <- substr(names[doKEGG],6,10)
-      desc[doKEGG] <- unlist(mget(terms,KEGGPATHID2NAME))
-    }
+#    doKEGG <- substr(names,1,5) == "KEGG:"
+#    if(sum(doKEGG)){
+#      require(KEGG.db)
+#      terms <- substr(names[doKEGG],6,10)
+#      desc[doKEGG] <- unlist(mget(terms,KEGGPATHID2NAME))
+#    }
     doPFAM <- substr(names,1,5) == "PFAM:"
     if(sum(doPFAM)){
        require(PFAM.db)

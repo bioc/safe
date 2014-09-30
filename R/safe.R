@@ -12,7 +12,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
 ## C.mat:    Object of class 'matrix' or 'list' with SparseM elements from getCmatrix().
 ## platform: A character string of a Bioconductor annotation package to build gene categories.
 ## annotate: A character string to specify the set of categories to build. Options include:
-##             "GO.BP","GO.CC","GO.MF","KEGG","PFAM", and "REACTOME"      
+##             "GO.BP","GO.CC","GO.MF","PFAM", and "REACTOME"      
 ## min.size: Optional minimum category size to be built.
 ## max.size: Optional maximum category size to be built
 ## by.gene:  Logical as to whether multiple probesets to a single gene should be downweighted
@@ -67,14 +67,14 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
                             by.gene = by.gene, gene.names = genes)
         C.names <- C.mat$col.names
         C.mat <- C.mat$C.mat.csr
-      } else if(annotate=="KEGG"){
-        cat(paste("Building categories from ",platform,"PATH\n",sep=""))
-        C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PATH",sep=""))),
-                            present.genes = probes,
-                            min.size = min.size, max.size = max.size,
-                            by.gene = by.gene, gene.names = genes)
-        C.names <- paste("KEGG:",C.mat$col.names,sep="")
-        C.mat <- C.mat$C.mat.csr
+#      } else if(annotate=="KEGG"){
+#        cat(paste("Building categories from ",platform,"PATH\n",sep=""))
+#        C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PATH",sep=""))),
+#                            present.genes = probes,
+#                            min.size = min.size, max.size = max.size,
+#                            by.gene = by.gene, gene.names = genes)
+#        C.names <- paste("KEGG:",C.mat$col.names,sep="")
+#        C.mat <- C.mat$C.mat.csr
       } else if(annotate=="PFAM"){
         cat(paste("Building categories from ",platform,"PFAM\n",sep=""))
         C.mat <- getCmatrix(gene.list = as.list(get(paste(platform,"PFAM",sep=""))),

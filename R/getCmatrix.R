@@ -1,7 +1,7 @@
 getCmatrix <-
 function (keyword.list = NULL, gene.list = NULL, 
           present.genes = NULL,  min.size = 2, max.size = Inf,
-          by.gene = FALSE, gene.names =  NULL,
+          by.gene = FALSE, gene.names =  NULL, prefix = "",
           prune = FALSE, as.matrix = FALSE,GO.ont=NULL,...)
 {
 ##    ...: Allows arguments from versions 1.0 and 2.0 to be ignored
@@ -14,6 +14,7 @@ function (keyword.list = NULL, gene.list = NULL,
 ## gene.names:         Character vector of gene names required for by.gene = TRUE
 ## prune:              Logical to remove redundant categories
 ## as.matrix:          Logical to return as class 'matrix' instead of 'SparseM'
+## prefix:             Optional character string as prefix to category names
 
 # require(SparseM)
 
@@ -111,6 +112,8 @@ cat(paste(length(C.names),"categories formed\n"))
        paste(C.names.drop[point==u],collapse="|")
      cat(paste("  Pruned to",length(C.names),"categories \n"))
   }
+
+C.names <- paste(prefix,C.names,sep="")
 
 #### 5) Return object
   if(as.matrix) {

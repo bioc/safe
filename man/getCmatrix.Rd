@@ -7,7 +7,8 @@
 \usage{
   getCmatrix(keyword.list = NULL, gene.list = NULL, 
              present.genes = NULL, min.size = 2, max.size = Inf,  
-             by.gene = FALSE, gene.names =  NULL, prune = FALSE, 
+             by.gene = FALSE, gene.names =  NULL, prefix = "",
+             prune = FALSE, 
              as.matrix = FALSE, GO.ont = NULL, ...)
 }
 \details{
@@ -25,6 +26,7 @@
   \item{max.size}{ Optional maximum category size to be considered. }
   \item{by.gene}{ Optional logical to build 'soft' categories at the gene level, instead of the feature level. }
   \item{gene.names}{ Optional character vector of gene names for 'soft' categories. }
+  \item{prefix}{ Optional character string to preceed category names. }
   \item{prune}{ Optional logical to remove duplicate categories. }
   \item{as.matrix}{ Optional argument to specify a matrix is returned rather than a matrix.csr.} 
   \item{GO.ont}{ "CC", "BP", or "MF" specify which Gene Ontology. }
