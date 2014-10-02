@@ -166,14 +166,14 @@ NOTE: For many instances, when performing pathway-analyses in R, it will improve
 
 Functional categories can also be derived from other sources of information commonly provided in Bioconductor AnnotationData packages. For example, the Protein Families database can be used to generate categories using the argument \texttt{annotate = "PFAM"}, or externally from \texttt{safe} as:
 
-<<>>=
+<<eval=FALSE>>=
 C.mat2 <- getCmatrix(gene.list = as.list(hgu133aPFAM),
                      present.genes = rownames(e3.upp))
 @
 
 Gene Ontology pathways can also be created from Bioconductor metadata packages. The argument \texttt{annotate = "GO.ALL"} will form categories from all three ontologies, while \texttt{"GO.CC"}, \texttt{"GO.BP"}, or \texttt{"GO.MF"} will restrict sets to Cellular Compartment, Biological Process or Molecular Function, respectively. It is important to note that in the hierarchical structure of the GO vocabularies, a gene category is generally thought of as containing the set of array features directly annotated to a term, and also to any terms beneath it in the ontology. The $C$ matrix of each can be externally built, under user-defined size restrictions, with the \texttt{getCmatrix} function, as follows, :
 
-<<>>=
+<<eval=FALSE>>=
 GO.list <- as.list(hgu133aGO2ALLPROBES)
 C.mat2 <- getCmatrix(keyword.list = GO.list, GO.ont = "CC", 
             present.genes = rownames(e3.upp))
