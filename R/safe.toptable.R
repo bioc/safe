@@ -31,8 +31,13 @@ function(safe, number=10, pretty=TRUE, description=TRUE){
     if(sum(doREACT)){
       require(reactome.db)
       terms <- gsub("REACTOME:","",names[doREACT])
-      desc[doREACT] <- sapply(mget(terms,reactomePATHID2NAME),
+      ## use mapIds() instead of mget()
+      tmpRes <- mapIds(reactome.db, keys=terms, column='PATHNAME',
+                       keytype='PATHID', multiVals='list')
+      desc[doREACT] <- sapply(tmpRes,
                           function(x) strsplit(x[1],": ")[[1]][2])
+      ## desc[doREACT] <- sapply(mget(terms,reactomePATHID2NAME),
+      ##                     function(x) strsplit(x[1],": ")[[1]][2])
     }
     table <- data.frame(GenesetID = names(safe@global.stat),
                         Size = round((rep(1,length(safe@local.stat)) %*%
