@@ -137,13 +137,13 @@ NOTE: As in standard feature-by-feature analyses, it is of critical importance t
 Feature-specific results within a category can be extracted by the \texttt{gene.results} function. This is useful for investigators interested in knowing which members of a category are contributing to its significance. The following example demonstrates how the direction and magnitude of differential expression are displayed by default. A list of two \texttt{data.frames} can also be returned with the argument \texttt{print.it = FALSE}.
 
 <<>>=
-gene.results(results, cat.name = "REACTOME:69183", gene.names = genes)
+gene.results(results, cat.name = "REACTOME:R-HSA-69183", gene.names = genes)
 @
 
 A summary of gene-specific results for a category is also available from the \texttt{safeplot} function. The process of generating SAFE-plots and a more detailed description of the image are given in section \ref{sec:plots}.
 
 <<plot0, results=hide, fig=T, include=F>>=
-safeplot(results, cat.name = "REACTOME:69183", gene.names = genes)
+safeplot(results, cat.name = "REACTOME:R-HSA-69183", gene.names = genes)
 @
 \begin{center}
 \includegraphics[viewport=30 90 400 310]{SAFEmanual3-plot0}
