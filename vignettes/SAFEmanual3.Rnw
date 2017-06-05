@@ -430,7 +430,7 @@ Because computational overhead is minimal outside of the resampling loop, execut
 Ever since permutation testing for pathway-analysis was used in Virtaneva {\em et al.} (2001), we have advocated that the cumulative distribution function (CDF) of the category be used to visualize the relative magnitude and direction of differential expression of array features annotated to the category. By default, the function \texttt{safeplot} will create a figure for the most significant pathway, as shown in section \ref{sec:imp}. SAFE-plots of other categories can be generated with the argument \texttt{cat.name}.
 
 <<plot2, results=hide, fig=T, include=F>>=
-safeplot(results, cat.name = "REACTOME:140877", gene.names = genes)
+safeplot(results, cat.name = "REACTOME:R-HSA-140877", gene.names = genes)
 @
 \begin{center}
 \includegraphics[viewport=30 90 400 320]{SAFEmanual3-plot2}
