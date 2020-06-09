@@ -33,7 +33,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
 #  require(SparseM)
 
 #### 0) Set up objects
-  if(!class(X.mat) %in% c("matrix","data.frame"))
+  if(!is.matrix(X.mat) && !is.data.frame(X.mat))
       stop("SAFE v3.* nolonger supports exprSet and other S4 class objects.",call.=FALSE)
 
   if(length(y.vec)!=ncol(X.mat))
@@ -97,7 +97,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
 
       } else stop(paste("Annotate = \"",annotate,"\" not recognized",sep=""),call.=FALSE)
    }
-  } else if(class(C.mat)=="matrix"){
+  } else if(is.matrix(C.mat)){
     C.names <- colnames(C.mat)
     if(is.null(C.names)){
         C.names <- paste("Column",1:ncol(C.mat))
@@ -171,7 +171,7 @@ function(X.mat, y.vec, C.mat = NULL, Z.mat = NULL, method = "permutation", platf
   if (local=="default") {
     if (length(unique(y.vec)) == 2){
       local <- "t.Student"
-    }  else if(class(y.vec)=="character") {
+    }  else if(is.character(y.vec)) {
       local <- "f.ANOVA"
     } else  local <-  "t.LM"
   }
